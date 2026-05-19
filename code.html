@@ -21,7 +21,7 @@
       theme: {
         extend: {
           colors: {
-            'primary':                '#855300',
+            'primary':                '#14213D',
             'on-primary':             '#ffffff',
             'primary-container':      '#fca311',
             'on-primary-container':   '#663f00',
@@ -54,6 +54,10 @@
             'inverse-surface':        '#382f25',
             'inverse-on-surface':     '#feeedf',
             'platinum':               '#E5E5E5',
+            'success':                '#27AE60',
+            'on-success':             '#ffffff',
+            'success-container':      '#D4EDDA',
+            'on-success-container':   '#0A4020',
           },
           fontFamily: {
             'space':  ['Space Grotesk', 'sans-serif'],
@@ -196,15 +200,15 @@
 
     /* Bottom nav */
     .bottom-nav-item { display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer; }
-    .bottom-nav-item.active .nav-label { color: #855300; }
-    .bottom-nav-item.active .material-symbols-outlined { color: #855300; }
+    .bottom-nav-item.active .nav-label { color: #14213D; }
+    .bottom-nav-item.active .material-symbols-outlined { color: #14213D; }
     .bottom-nav-item:not(.active) .material-symbols-outlined { color: #534433; }
     .bottom-nav-item:not(.active) .nav-label { color: #534433; }
 
     /* Pulsing dot */
     .pulse-dot {
       width: 10px; height: 10px;
-      background: #ba1a1a;
+      background: #27AE60;
       border-radius: 9999px;
       position: relative;
     }
@@ -213,7 +217,7 @@
       position: absolute;
       inset: -4px;
       border-radius: 9999px;
-      border: 2px solid #ba1a1a;
+      border: 2px solid #27AE60;
       animation: ping 1s cubic-bezier(0,0,0.2,1) infinite;
     }
     @keyframes ping {
@@ -384,7 +388,7 @@
             <span class="font-inter text-body-sm text-on-surface-variant">Hypertension</span>
           </div>
         </div>
-        <a href="profile.html" class="font-inter text-label-md text-tertiary no-underline">Edit profile →</a>
+        <a href="profile.html" class="font-inter text-label-md text-primary no-underline">Edit profile →</a>
       </div>
 
       <!-- Nearby Units Card -->
@@ -417,7 +421,7 @@
       <div class="card-level-1 rounded-xl p-4 span-2">
         <div class="flex items-center justify-between mb-3">
           <span class="font-space font-semibold text-headline-md text-on-surface">Emergency Contacts</span>
-          <a href="settings.html" class="font-inter text-label-md text-tertiary no-underline">Manage →</a>
+          <a href="settings.html" class="font-inter text-label-md text-primary no-underline">Manage →</a>
         </div>
         <div class="flex flex-wrap gap-2">
           <!-- Contact Pill -->
