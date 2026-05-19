@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>First Aid — RoadSOS</title>
+<meta name="description" content="Step-by-step first aid guidance for road accident injuries"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0..1,0" rel="stylesheet"/>
+<link rel="stylesheet" href="shared.css"/>
+<style>
+.step-badge{width:32px;height:32px;border-radius:50%;background:#fca311;display:flex;align-items:center;justify-content:center;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:14px;color:#663f00;flex-shrink:0}
+.step-illus{background:#f5e5d7;border-radius:.75rem;height:160px;display:flex;align-items:center;justify-content:center}
+.done-card{opacity:.6}
+.done-card .t-body-lg{text-decoration:line-through}
+.audio-bar{position:fixed;bottom:64px;left:0;right:0;background:#fff;border-top:2px solid #14213D;box-shadow:0 -4px 0 rgba(0,0,0,.1);padding:12px 16px;display:flex;align-items:center;gap:12px;z-index:40}
+@media(min-width:768px){.audio-bar{bottom:0;max-width:1280px;margin:0 auto;position:sticky}}
+.bystander-banner{background:#ffb95f;border-radius:.75rem;padding:12px 16px;display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.progress-track{height:6px;background:#e7d7c9;border-radius:3px;overflow:hidden;margin-bottom:8px}
+.progress-fill{height:100%;background:#fca311;border-radius:3px;transition:width .4s}
+</style>
+</head>
+<body class="pb-28">
+<header class="app-header">
+  <div class="header-inner">
+    <a href="code.html" class="wordmark"><span class="material-symbols-outlined icon-fill" style="font-size:24px">emergency</span>RoadSOS</a>
+    <nav class="nav-links"><a href="triage.html">Triage</a><a href="ambulance.html">Ambulance</a><a href="hospital.html">Hospital</a></nav>
+    <div style="width:36px;height:36px;border-radius:50%;background:#ffb95f;display:flex;align-items:center;justify-content:center"><span style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:12px;color:#2a1700">AK</span></div>
+  </div>
+</header>
+<main class="page">
+  <a href="code.html" style="display:inline-flex;align-items:center;gap:6px;color:#534433;font-size:14px;font-weight:600;margin-bottom:16px"><span class="material-symbols-outlined" style="font-size:18px">arrow_back</span>Back</a>
+  <h1 class="t-headline-md" style="margin-bottom:12px">First Aid Guidance</h1>
+
+  <!-- Injury type chips -->
+  <div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:8px;margin-bottom:16px">
+    <button class="chip-active" id="c-bleeding" onclick="setChip(this,'bleeding')">Bleeding</button>
+    <button class="chip-inactive" id="c-fracture" onclick="setChip(this,'fracture')">Fracture</button>
+    <button class="chip-inactive" id="c-cpr" onclick="setChip(this,'cpr')">CPR</button>
+    <button class="chip-inactive" id="c-burn" onclick="setChip(this,'burn')">Burns</button>
+    <button class="chip-inactive" id="c-shock" onclick="setChip(this,'shock')">Shock</button>
+  </div>
+
+  <!-- Bystander alert -->
+  <div class="bystander-banner">
+    <span class="material-symbols-outlined icon-fill" style="font-size:24px;color:#663f00">person</span>
+    <div style="flex:1"><p class="t-label-lg" style="color:#663f00">Ravi S. — trained first-aider, 300m away</p><p class="t-body-sm" style="color:rgba(102,63,0,.75)">Notified · En route</p></div>
+    <span class="material-symbols-outlined icon-fill" style="font-size:20px;color:#663f00">check_circle</span>
+  </div>
+
+  <!-- Progress -->
+  <div style="margin-bottom:20px">
+    <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+      <span class="t-label-md" style="color:#534433">Step <span id="cur-step">2</span> of 6</span>
+      <span class="t-label-md" style="color:#534433"><span id="pct">33</span>% complete</span>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="prog-fill" style="width:33%"></div></div>
+  </div>
+
+  <!-- Completed step -->
+  <div class="card-level-1 rounded-xl done-card" style="padding:16px;margin-bottom:12px;display:flex;align-items:center;gap:12px">
+    <div style="width:32px;height:32px;border-radius:50%;background:#1dc4ff;display:flex;align-items:center;justify-content:center"><span class="material-symbols-outlined icon-fill" style="font-size:18px;color:#001e2b">check</span></div>
+    <div><p class="t-label-md" style="color:#534433">Step 1 — Done</p><p class="t-body-lg">Call for help / ensure your safety</p></div>
+  </div>
+
+  <!-- Active step -->
+  <div class="card-level-2 rounded-xl" style="padding:20px;margin-bottom:12px;animation:fadein .3s ease">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+      <div class="step-badge">2</div>
+      <div><p class="t-label-md" style="color:#534433">Current Step</p><p class="t-body-lg" style="font-weight:600" id="step-action">Apply direct pressure</p></div>
+    </div>
+    <p class="t-body-md" id="step-desc" style="margin-bottom:16px">Use a clean cloth or bandage. Press firmly on the wound and maintain pressure for at least 10 minutes without lifting the cloth.</p>
+    <div class="step-illus"><span class="material-symbols-outlined icon-fill" style="font-size:64px;color:#867461">healing</span></div>
+    <div style="display:flex;gap:10px;margin-top:16px">
+      <button class="btn-ghost" style="flex:1" onclick="prevStep()"><span class="material-symbols-outlined" style="font-size:18px">arrow_back</span>Prev</button>
+      <button class="btn-primary" style="flex:2" onclick="nextStep()">Next Step<span class="material-symbols-outlined" style="font-size:18px">arrow_forward</span></button>
+    </div>
+  </div>
+</main>
+
+<!-- Audio bar -->
+<div class="audio-bar">
+  <button id="play-btn" aria-label="Play/Pause audio guidance" onclick="togglePlay()" style="width:40px;height:40px;border-radius:50%;background:#fca311;display:flex;align-items:center;justify-content:center">
+    <span class="material-symbols-outlined icon-fill" id="play-icon" style="font-size:20px;color:#663f00">play_arrow</span>
+  </button>
+  <div style="flex:1">
+    <p class="t-label-lg">Audio Guidance</p>
+    <p class="t-body-sm" style="color:#534433">Step <span id="audio-step">2</span> of 6 · Control the Bleeding</p>
+  </div>
+  <div class="waveform" id="waveform" style="display:none">
+    <div class="wave-bar" style="height:40%"></div><div class="wave-bar"></div><div class="wave-bar" style="height:70%"></div><div class="wave-bar"></div><div class="wave-bar" style="height:60%"></div>
+  </div>
+</div>
+
+<nav class="bottom-nav">
+  <a href="code.html" class="bnav-item"><span class="material-symbols-outlined" style="font-size:24px">home</span><span>Home</span></a>
+  <a href="prevention.html" class="bnav-item"><span class="material-symbols-outlined" style="font-size:24px">map</span><span>Map</span></a>
+  <div class="bnav-fab"><a href="sos.html" class="bnav-fab-btn" aria-label="SOS"><span class="material-symbols-outlined icon-fill" style="font-size:28px;color:#663f00">emergency</span></a><span class="t-label-md" style="color:#663f00">SOS</span></div>
+  <a href="history.html" class="bnav-item"><span class="material-symbols-outlined" style="font-size:24px">history</span><span>History</span></a>
+  <a href="profile.html" class="bnav-item"><span class="material-symbols-outlined" style="font-size:24px">person</span><span>Profile</span></a>
+</nav>
+<script>
+let step=2,playing=false;
+const steps=[
+  {action:'Call for help',desc:'Ensure your own safety first. Call 112 or activate SOS.'},
+  {action:'Apply direct pressure',desc:'Use a clean cloth or bandage. Press firmly on the wound and maintain pressure for at least 10 minutes without lifting the cloth.'},
+  {action:'Elevate the limb',desc:'If possible, raise the injured limb above heart level to reduce blood flow and slow bleeding.'},
+  {action:'Check circulation',desc:'Check fingers/toes below the injury for sensation and pulse every 2 minutes.'},
+  {action:'Keep patient warm',desc:'Shock is common. Cover the patient with a blanket to maintain body temperature.'},
+  {action:'Monitor breathing',desc:'Keep airway clear. Place in recovery position if unconscious and breathing normally.'}
+];
+function render(){
+  const s=steps[step-1];
+  document.getElementById('step-action').textContent=s.action;
+  document.getElementById('step-desc').textContent=s.desc;
+  document.getElementById('cur-step').textContent=step;
+  document.getElementById('audio-step').textContent=step;
+  const pct=Math.round(((step-1)/6)*100);
+  document.getElementById('pct').textContent=pct;
+  document.getElementById('prog-fill').style.width=pct+'%';
+}
+function nextStep(){if(step<6){step++;render();}}
+function prevStep(){if(step>2){step--;render();}}
+function togglePlay(){
+  playing=!playing;
+  document.getElementById('play-icon').textContent=playing?'pause':'play_arrow';
+  document.getElementById('waveform').style.display=playing?'flex':'none';
+}
+function setChip(el,type){
+  document.querySelectorAll('.chip-active,.chip-inactive').forEach(c=>{c.className=c===el?'chip-active':'chip-inactive'});
+}
+</script>
+</body>
+</html>

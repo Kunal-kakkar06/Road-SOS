@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Settings — RoadSOS</title>
+<meta name="description" content="RoadSOS app settings — contacts, detection, language, notifications"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0..1,0" rel="stylesheet"/>
+<link rel="stylesheet" href="shared.css"/>
+<style>
+.sec-head{font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:700;color:#534433;text-transform:uppercase;letter-spacing:.06em;margin:24px 0 8px;padding:0 4px}
+.tog-row{display:flex;align-items:center;gap:12px;padding:14px 0}
+.tog-row+.tog-row{border-top:1px solid #f5e5d7}
+.tog-row-info{flex:1;min-width:0}
+</style>
+</head>
+<body class="pb-20">
+<header class="app-header">
+  <div class="header-inner">
+    <a href="code.html" class="wordmark"><span class="material-symbols-outlined icon-fill" style="font-size:24px">emergency</span>RoadSOS</a>
+    <nav class="nav-links"><a href="profile.html">Profile</a><a href="history.html">History</a></nav>
+    <div style="width:36px;height:36px;border-radius:50%;background:#ffb95f;display:flex;align-items:center;justify-content:center"><span style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:12px;color:#2a1700">AK</span></div>
+  </div>
+</header>
+<main class="page">
+  <h1 class="t-headline-md" style="margin-bottom:4px">Settings</h1>
+  <p class="t-body-sm" style="color:#534433;margin-bottom:8px">Arjun Kumar · Free Plan</p>
+
+  <!-- Emergency contacts -->
+  <p class="sec-head">Emergency Contacts</p>
+  <div class="card-level-1 rounded-xl" style="padding:16px">
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px">
+      <div class="contact-pill"><div style="width:32px;height:32px;border-radius:50%;background:#ffb95f;display:flex;align-items:center;justify-content:center"><span style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:11px;color:#2a1700">SK</span></div><div><p class="t-label-lg" style="line-height:1.1">Sarah K</p><p class="t-body-sm" style="color:#534433">+91 98765 43210</p></div><button aria-label="Remove Sarah K" onclick="this.closest('.contact-pill').remove()"><span class="material-symbols-outlined" style="font-size:16px;color:#534433">close</span></button></div>
+      <div class="contact-pill"><div style="width:32px;height:32px;border-radius:50%;background:#cdd9fe;display:flex;align-items:center;justify-content:center"><span style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:11px;color:#0e1b37">DM</span></div><div><p class="t-label-lg" style="line-height:1.1">David M</p><p class="t-body-sm" style="color:#534433">+91 87654 32109</p></div><button aria-label="Remove David M" onclick="this.closest('.contact-pill').remove()"><span class="material-symbols-outlined" style="font-size:16px;color:#534433">close</span></button></div>
+    </div>
+    <button class="btn-ghost" style="width:100%;min-height:44px" onclick="alert('Add contact')"><span class="material-symbols-outlined" style="font-size:18px">add</span>Add Contact</button>
+  </div>
+
+  <!-- Crash detection sensitivity -->
+  <p class="sec-head">Crash Detection</p>
+  <div class="card-level-1 rounded-xl" style="padding:16px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <span class="t-label-lg">Detection Sensitivity</span>
+      <span class="t-body-sm" style="color:#534433" id="sens-label">Medium</span>
+    </div>
+    <input type="range" class="slider" min="1" max="3" value="2" oninput="setSens(this.value)" aria-label="Crash detection sensitivity"/>
+    <div style="display:flex;justify-content:space-between;margin-top:4px">
+      <span class="t-label-md" style="color:#534433">Low</span>
+      <span class="t-label-md" style="color:#534433">High</span>
+    </div>
+  </div>
+
+  <!-- Offline data -->
+  <p class="sec-head">Offline &amp; Data</p>
+  <div class="card-level-1 rounded-xl" style="padding:16px">
+    <div class="tog-row">
+      <span class="material-symbols-outlined" style="font-size:20px;color:#534433">download</span>
+      <div class="tog-row-info"><p class="t-label-lg">Offline Maps</p><p class="t-body-sm" style="color:#534433">Download your region for offline use</p></div>
+      <label class="toggle"><input type="checkbox" checked/><div class="toggle-track"></div></label>
+    </div>
+    <div class="tog-row">
+      <span class="material-symbols-outlined" style="font-size:20px;color:#534433">wifi_off</span>
+      <div class="tog-row-info"><p class="t-label-lg">SMS Fallback</p><p class="t-body-sm" style="color:#534433">Send SOS via SMS when no internet</p></div>
+      <label class="toggle"><input type="checkbox" checked/><div class="toggle-track"></div></label>
+    </div>
+  </div>
+
+  <!-- Language -->
+  <p class="sec-head">Language</p>
+  <div class="card-level-1 rounded-xl" style="padding:16px">
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button style="padding:6px 16px;border-radius:9999px;font-size:12px;font-weight:700;background:#fca311;color:#663f00;border:none" onclick="setLang(this)">EN</button>
+      <button style="padding:6px 16px;border-radius:9999px;font-size:12px;font-weight:700;background:#fbebdc;color:#534433;border:1px solid #d9c3ad" onclick="setLang(this)">HI</button>
+      <button style="padding:6px 16px;border-radius:9999px;font-size:12px;font-weight:700;background:#fbebdc;color:#534433;border:1px solid #d9c3ad" onclick="setLang(this)">KN</button>
+      <button style="padding:6px 16px;border-radius:9999px;font-size:12px;font-weight:700;background:#fbebdc;color:#534433;border:1px solid #d9c3ad" onclick="setLang(this)">TA</button>
+    </div>
+  </div>
+
+  <!-- Notifications -->
+  <p class="sec-head">Notifications</p>
+  <div class="card-level-1 rounded-xl" style="padding:16px">
+    <div class="tog-row">
+      <span class="material-symbols-outlined" style="font-size:20px;color:#534433">notifications</span>
+      <div class="tog-row-info"><p class="t-label-lg">Emergency Alerts</p><p class="t-body-sm" style="color:#534433">SOS confirmations and dispatches</p></div>
+      <label class="toggle"><input type="checkbox" checked/><div class="toggle-track"></div></label>
+    </div>
+    <div class="tog-row">
+      <span class="material-symbols-outlined" style="font-size:20px;color:#534433">warning</span>
+      <div class="tog-row-info"><p class="t-label-lg">Blackspot Warnings</p><p class="t-body-sm" style="color:#534433">Alert when entering high-risk zones</p></div>
+      <label class="toggle"><input type="checkbox" checked/><div class="toggle-track"></div></label>
+    </div>
+    <div class="tog-row">
+      <span class="material-symbols-outlined" style="font-size:20px;color:#534433">bedtime</span>
+      <div class="tog-row-info"><p class="t-label-lg">Fatigue Reminders</p><p class="t-body-sm" style="color:#534433">Nudge after 2h+ driving</p></div>
+      <label class="toggle"><input type="checkbox"/><div class="toggle-track"></div></label>
+    </div>
+  </div>
+
+  <!-- Subscription -->
+  <p class="sec-head">Subscription</p>
+  <div class="card-level-1 rounded-xl" style="padding:16px;background:#f0e0d1;border:1px solid rgba(20,33,61,.1)">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+      <span class="material-symbols-outlined icon-fill" style="font-size:24px;color:#855300">workspace_premium</span>
+      <div><p class="t-label-lg">Free Plan</p><p class="t-body-sm" style="color:#534433">3 SOS/month · Basic triage · No offline maps</p></div>
+    </div>
+    <button class="btn-primary" onclick="alert('Upgrade to RoadSOS Pro!')"><span class="material-symbols-outlined icon-fill" style="font-size:20px">star</span>Upgrade to Pro — ₹99/month</button>
+  </div>
+
+  <!-- Danger zone -->
+  <p class="sec-head" style="color:#ba1a1a">Danger Zone</p>
+  <div class="rounded-xl" style="padding:16px;background:#ffdad6;border:1px solid rgba(186,26,26,.2)">
+    <p class="t-body-sm" style="color:#534433;margin-bottom:12px">This will permanently delete your account, data, and all incident reports.</p>
+    <button style="width:100%;min-height:48px;background:transparent;color:#ba1a1a;border:2px solid #ba1a1a;border-radius:.75rem;font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:700" onclick="if(confirm('Are you sure?'))alert('Account deleted.')">Delete Account</button>
+  </div>
+</main>
+<nav class="bottom-nav">
+  <a href="code.html" class="bnav-item"><span class="material-symbols-outlined" style="font-size:24px">home</span><span>Home</span></a>
+  <a href="prevention.html" class="bnav-item"><span class="material-symbols-outlined" style="font-size:24px">map</span><span>Map</span></a>
+  <div class="bnav-fab"><a href="sos.html" class="bnav-fab-btn" aria-label="SOS"><span class="material-symbols-outlined icon-fill" style="font-size:28px;color:#663f00">emergency</span></a><span class="t-label-md" style="color:#663f00">SOS</span></div>
+  <a href="history.html" class="bnav-item"><span class="material-symbols-outlined" style="font-size:24px">history</span><span>History</span></a>
+  <a href="profile.html" class="bnav-item"><span class="material-symbols-outlined" style="font-size:24px">person</span><span>Profile</span></a>
+</nav>
+<script>
+const sl=['Low','Medium','High'];
+function setSens(v){document.getElementById('sens-label').textContent=sl[v-1]}
+function setLang(el){el.parentElement.querySelectorAll('button').forEach(b=>{b.style.background='#fbebdc';b.style.color='#534433';b.style.borderColor='#d9c3ad'});el.style.background='#fca311';el.style.color='#663f00';el.style.borderColor='#fca311'}
+</script>
+</body>
+</html>

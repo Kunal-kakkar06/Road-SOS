@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Medical Profile — RoadSOS</title>
+<meta name="description" content="Your medical ID for emergency responders"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0..1,0" rel="stylesheet"/>
+<link rel="stylesheet" href="shared.css"/>
+<style>
+.sec{margin-bottom:16px;padding:16px}
+.allergy-dot{width:8px;height:8px;border-radius:50%;background:#ba1a1a;flex-shrink:0;margin-top:6px}
+.lang-chip{padding:6px 16px;border-radius:9999px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid #d9c3ad;background:#fbebdc;color:#534433}
+.lang-chip.on{background:#fca311;color:#663f00;border-color:#fca311}
+.fab{position:fixed;bottom:80px;right:16px;width:56px;height:56px;border-radius:50%;background:#fca311;display:flex;align-items:center;justify-content:center;border:2px solid #14213D;box-shadow:0 8px 0 rgba(0,0,0,.15);z-index:40}
+@media(min-width:768px){.fab{bottom:24px;right:64px}}
+</style>
+</head>
+<body class="pb-20">
+<header class="app-header">
+  <div class="header-inner">
+    <a href="code.html" class="wordmark"><span class="material-symbols-outlined icon-fill" style="font-size:24px">emergency</span>RoadSOS</a>
+    <nav class="nav-links"><a href="ambulance.html">Ambulance</a><a href="hospital.html">Hospital</a><a href="settings.html">Settings</a></nav>
+    <div style="width:36px;height:36px;border-radius:50%;background:#ffb95f;display:flex;align-items:center;justify-content:center"><span style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:12px;color:#2a1700">AK</span></div>
+  </div>
+</header>
+<main class="page">
+  <a href="code.html" style="display:inline-flex;align-items:center;gap:6px;color:#534433;font-size:14px;font-weight:600;margin-bottom:16px"><span class="material-symbols-outlined" style="font-size:18px">arrow_back</span>Back</a>
+  <h1 class="t-headline-md" style="margin-bottom:16px">Medical Profile</h1>
+  <div class="card-level-1 rounded-xl sec" style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+    <div style="width:64px;height:64px;border-radius:50%;background:#ffb95f;display:flex;align-items:center;justify-content:center;flex-shrink:0"><span style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:22px;color:#2a1700">AK</span></div>
+    <div style="flex:1">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <span class="t-headline-md">Arjun Kumar</span>
+        <span style="background:#ba1a1a;color:#fff;border-radius:9999px;padding:4px 14px;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:16px">B+</span>
+      </div>
+      <p class="t-body-sm" style="color:#534433;margin-top:4px">DOB: 14 Mar 1990 · Male</p>
+    </div>
+    <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+      <span class="t-label-md" style="color:#534433">Lock screen</span>
+      <label class="toggle"><input type="checkbox" checked/><div class="toggle-track"></div></label>
+    </label>
+  </div>
+  <div class="card-level-1 rounded-xl sec">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><span class="material-symbols-outlined icon-fill" style="font-size:20px;color:#ba1a1a">warning</span><span class="t-label-lg">Allergies</span></div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div style="display:flex;gap:8px"><div class="allergy-dot"></div><span class="t-body-md">Penicillin — Severe (anaphylaxis)</span></div>
+      <div style="display:flex;gap:8px"><div class="allergy-dot"></div><span class="t-body-md">Sulpha drugs — Moderate rash</span></div>
+      <div style="display:flex;gap:8px"><div class="allergy-dot"></div><span class="t-body-md">Latex — Mild contact allergy</span></div>
+    </div>
+  </div>
+  <div class="card-level-1 rounded-xl sec">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><span class="material-symbols-outlined icon-fill" style="font-size:20px;color:#006687">medication</span><span class="t-label-lg">Medications</span></div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div style="display:flex;gap:8px"><span class="material-symbols-outlined" style="font-size:16px;color:#534433">medication</span><span class="t-body-md">Metformin 500mg — twice daily</span></div>
+      <div style="display:flex;gap:8px"><span class="material-symbols-outlined" style="font-size:16px;color:#534433">medication</span><span class="t-body-md">Amlodipine 5mg — once daily</span></div>
+    </div>
+  </div>
+  <div class="card-level-1 rounded-xl sec">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><span class="material-symbols-outlined icon-fill" style="font-size:20px;color:#006687">favorite</span><span class="t-label-lg">Conditions</span></div>
+    <div style="display:flex;flex-direction:column;gap:6px"><span class="t-body-md">Type 2 Diabetes (managed)</span><span class="t-body-md">Hypertension Stage 1</span></div>
+  </div>
+  <div class="card-level-1 rounded-xl sec">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><span class="t-label-lg">Emergency Contacts</span><button onclick="alert('Add contact')" style="color:#006687;font-size:12px;font-weight:600">+ Add</button></div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px">
+      <div class="contact-pill"><div style="width:32px;height:32px;border-radius:50%;background:#ffb95f;display:flex;align-items:center;justify-content:center"><span style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:11px;color:#2a1700">SK</span></div><div><p class="t-label-lg" style="line-height:1.1">Sarah K</p><p class="t-body-sm" style="color:#534433">+91 98765 43210</p></div><button aria-label="Call Sarah K"><span class="material-symbols-outlined" style="font-size:18px;color:#855300">call</span></button></div>
+      <div class="contact-pill"><div style="width:32px;height:32px;border-radius:50%;background:#cdd9fe;display:flex;align-items:center;justify-content:center"><span style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:11px;color:#0e1b37">DM</span></div><div><p class="t-label-lg" style="line-height:1.1">David M</p><p class="t-body-sm" style="color:#534433">+91 87654 32109</p></div><button aria-label="Call David M"><span class="material-symbols-outlined" style="font-size:18px;color:#855300">call</span></button></div>
+    </div>
+  </div>
+  <div class="card-level-1 rounded-xl sec">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><span class="material-symbols-outlined" style="font-size:20px;color:#534433">language</span><span class="t-label-lg">Report Language</span></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="lang-chip on" onclick="setLang(this)">EN</button>
+      <button class="lang-chip" onclick="setLang(this)">HI</button>
+      <button class="lang-chip" onclick="setLang(this)">KN</button>
+      <button class="lang-chip" onclick="setLang(this)">TA</button>
+    </div>
+  </div>
+</main>
+<button class="fab" aria-label="Edit medical profile" onclick="alert('Edit mode')"><span class="material-symbols-outlined icon-fill" style="font-size:24px;color:#663f00">edit</span></button>
+<nav class="bottom-nav">
+  <a href="code.html" class="bnav-item"><span class="material-symbols-outlined" style="font-size:24px">home</span><span>Home</span></a>
+  <a href="prevention.html" class="bnav-item"><span class="material-symbols-outlined" style="font-size:24px">map</span><span>Map</span></a>
+  <div class="bnav-fab"><a href="sos.html" class="bnav-fab-btn" aria-label="SOS"><span class="material-symbols-outlined icon-fill" style="font-size:28px;color:#663f00">emergency</span></a><span class="t-label-md" style="color:#663f00">SOS</span></div>
+  <a href="history.html" class="bnav-item"><span class="material-symbols-outlined" style="font-size:24px">history</span><span>History</span></a>
+  <a href="profile.html" class="bnav-item active"><span class="material-symbols-outlined icon-fill" style="font-size:24px">person</span><span>Profile</span></a>
+</nav>
+<script>function setLang(el){document.querySelectorAll('.lang-chip').forEach(c=>c.className='lang-chip');el.className='lang-chip on'}</script>
+</body>
+</html>

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Family Tracking — RoadSOS</title>
+<meta name="description" content="Track your loved one's emergency status in real time"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0..1,0" rel="stylesheet"/>
+<link rel="stylesheet" href="shared.css"/>
+<style>
+.user-pin{position:absolute;top:40%;left:50%;transform:translate(-50%,-50%)}
+.user-pin-dot{width:20px;height:20px;border-radius:50%;background:#fca311;border:3px solid #fff;position:relative}
+.user-pin-ring{position:absolute;inset:-8px;border-radius:50%;border:2px solid rgba(252,163,17,.5);animation:ping 1.2s ease infinite}
+</style>
+</head>
+<body class="pb-20">
+<header class="app-header">
+  <div class="header-inner">
+    <a href="code.html" class="wordmark"><span class="material-symbols-outlined icon-fill" style="font-size:24px">emergency</span>RoadSOS</a>
+    <nav class="nav-links"><a href="ambulance.html">Ambulance</a><a href="hospital.html">Hospital</a><a href="history.html">History</a></nav>
+    <div style="width:36px;height:36px;border-radius:50%;background:#ffb95f;display:flex;align-items:center;justify-content:center"><span style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:12px;color:#2a1700">SK</span></div>
+  </div>
+</header>
+<main class="page">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+    <h1 class="t-headline-md">Family Tracking</h1>
+    <span style="background:#ffdad6;color:#410002;border-radius:9999px;padding:4px 12px;font-size:12px;font-weight:700">EMERGENCY ACTIVE</span>
+  </div>
+  <p class="t-body-sm" style="color:#534433;margin-bottom:16px">Tracking: <strong>Arjun Kumar</strong> · Last update 12s ago</p>
+
+  <!-- Map -->
+  <div class="card-level-1 rounded-xl overflow-hidden" style="margin-bottom:16px">
+    <div class="map-bg" style="height:300px;position:relative">
+      <div class="map-road h" style="top:45%"></div>
+      <div class="map-road v" style="left:50%"></div>
+      <!-- User pin (Arjun) -->
+      <div class="user-pin">
+        <div class="user-pin-dot"><div class="user-pin-ring"></div></div>
+        <div style="background:#fca311;border:2px solid #14213D;border-radius:.25rem;padding:2px 6px;font-size:10px;font-weight:700;color:#663f00;white-space:nowrap;margin-top:4px">Arjun · Active SOS</div>
+      </div>
+      <!-- Ambulance pin -->
+      <div style="position:absolute;top:30%;left:25%">
+        <div style="background:#fff;border:2px solid #14213D;border-radius:.5rem;padding:3px 8px;font-size:10px;font-weight:700;white-space:nowrap">CATS Unit 4 · ETA 8 min</div>
+        <span class="material-symbols-outlined icon-fill" style="font-size:24px;color:#006687">ambulance</span>
+      </div>
+      <!-- Hospital pin -->
+      <div style="position:absolute;top:15%;left:72%">
+        <div style="background:#fff;border:2px solid #14213D;border-radius:.5rem;padding:3px 8px;font-size:10px;font-weight:700">🏥 Manipal Hosp.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Status timeline -->
+  <div class="card-level-1 rounded-xl" style="padding:16px;margin-bottom:16px">
+    <p class="t-label-lg" style="margin-bottom:14px">Live Status</p>
+    <div style="display:flex;flex-direction:column;gap:0">
+      <div style="display:flex;gap:14px;min-height:48px">
+        <div style="display:flex;flex-direction:column;align-items:center"><div class="timeline-node-done"><span class="material-symbols-outlined icon-fill" style="font-size:13px;color:#663f00">check</span></div><div class="timeline-line"></div></div>
+        <div style="padding-bottom:16px"><p class="t-label-lg">SOS Triggered</p><p class="t-body-sm" style="color:#534433">08:14:06</p></div>
+      </div>
+      <div style="display:flex;gap:14px;min-height:48px">
+        <div style="display:flex;flex-direction:column;align-items:center"><div class="timeline-node-done"><span class="material-symbols-outlined icon-fill" style="font-size:13px;color:#663f00">check</span></div><div class="timeline-line"></div></div>
+        <div style="padding-bottom:16px"><p class="t-label-lg">Ambulance Dispatched</p><p class="t-body-sm" style="color:#534433">08:14:20 · CATS Unit 4</p></div>
+      </div>
+      <div style="display:flex;gap:14px;min-height:48px">
+        <div style="display:flex;flex-direction:column;align-items:center"><div class="timeline-node-active"><span class="material-symbols-outlined" style="font-size:13px;color:#663f00">arrow_forward</span></div><div class="timeline-line"></div></div>
+        <div style="padding-bottom:16px"><p class="t-label-lg">En Route — 8 min ETA</p><p class="t-body-sm" style="color:#534433">08:22:00</p></div>
+      </div>
+      <div style="display:flex;gap:14px">
+        <div style="display:flex;flex-direction:column;align-items:center"><div class="timeline-node-pending"></div></div>
+        <div><p class="t-label-lg" style="color:#534433">Hospital Arrived</p><p class="t-body-sm" style="color:#867461">Pending</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hospital card -->
+  <div class="card-level-2 rounded-xl" style="padding:16px;margin-bottom:16px">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px">
+      <div>
+        <p class="t-headline-md" style="font-size:18px">Manipal Hospital</p>
+        <p class="t-body-sm" style="color:#534433">Old Airport Road, Bengaluru</p>
+      </div>
+      <span class="eta-pill">~8 min</span>
+    </div>
+    <span style="display:inline-flex;align-items:center;gap:4px;background:#fbebdc;color:#006687;border-radius:9999px;font-size:12px;font-weight:600;padding:3px 10px">
+      <span class="material-symbols-outlined icon-fill" style="font-size:12px">check_circle</span>Pre-alert sent
+    </span>
+  </div>
+
+  <!-- Quick actions -->
+  <div style="display:flex;gap:10px">
+    <button class="btn-primary" style="flex:2;min-height:52px" onclick="alert('Calling Arjun…')">
+      <span class="material-symbols-outlined icon-fill" style="font-size:20px">call</span>Call Arjun
+    </button>
+    <button style="flex:1;min-height:52px;background:#525e7d;color:#fff;border-radius:.75rem;font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px" onclick="alert('Calling ambulance…')">
+      <span class="material-symbols-outlined icon-fill" style="font-size:18px">ambulance</span>Ambulance
+    </button>
+  </div>
+</main>
+<nav class="bottom-nav">
+  <a href="code.html" class="bnav-item"><span class="material-symbols-outlined" style="font-size:24px">home</span><span>Home</span></a>
+  <a href="prevention.html" class="bnav-item"><span class="material-symbols-outlined" style="font-size:24px">map</span><span>Map</span></a>
+  <div class="bnav-fab"><a href="sos.html" class="bnav-fab-btn" aria-label="SOS"><span class="material-symbols-outlined icon-fill" style="font-size:28px;color:#663f00">emergency</span></a><span class="t-label-md" style="color:#663f00">SOS</span></div>
+  <a href="history.html" class="bnav-item"><span class="material-symbols-outlined" style="font-size:24px">history</span><span>History</span></a>
+  <a href="profile.html" class="bnav-item"><span class="material-symbols-outlined" style="font-size:24px">person</span><span>Profile</span></a>
+</nav>
+</body>
+</html>

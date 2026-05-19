@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Prevention Map — RoadSOS</title>
+<meta name="description" content="Trip risk score, blackspots, and fatigue alerts for safe driving"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0..1,0" rel="stylesheet"/>
+<link rel="stylesheet" href="shared.css"/>
+<style>
+.risk-score-num{font-family:'Space Grotesk',sans-serif;font-size:64px;line-height:1;font-weight:700}
+.risk-low{color:#006687}
+.risk-mid{color:#855300}
+.risk-high{color:#ba1a1a}
+.sub-chip{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:9999px;font-size:12px;font-weight:600;background:#fbebdc;color:#534433}
+.stat-item{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1}
+.weather-banner{position:absolute;top:8px;left:8px;right:8px;background:rgba(255,248,244,.93);border-radius:.75rem;padding:8px 12px;display:flex;align-items:center;gap:8px}
+</style>
+</head>
+<body class="pb-20">
+<header class="app-header">
+  <div class="header-inner">
+    <a href="code.html" class="wordmark"><span class="material-symbols-outlined icon-fill" style="font-size:24px">emergency</span>RoadSOS</a>
+    <nav class="nav-links"><a href="ambulance.html">Ambulance</a><a href="hospital.html">Hospital</a><a href="history.html">History</a></nav>
+    <div style="width:36px;height:36px;border-radius:50%;background:#ffb95f;display:flex;align-items:center;justify-content:center"><span style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:12px;color:#2a1700">AK</span></div>
+  </div>
+</header>
+<main class="page">
+  <a href="code.html" style="display:inline-flex;align-items:center;gap:6px;color:#534433;font-size:14px;font-weight:600;margin-bottom:16px"><span class="material-symbols-outlined" style="font-size:18px">arrow_back</span>Back</a>
+  <h1 class="t-headline-md" style="margin-bottom:16px">Prevention Map</h1>
+
+  <!-- Map -->
+  <div class="card-level-1 rounded-xl overflow-hidden" style="margin-bottom:16px">
+    <div class="map-bg" style="height:360px;position:relative">
+      <div class="map-road h" style="top:40%"></div>
+      <div class="map-road h" style="top:65%"></div>
+      <div class="map-road v" style="left:35%"></div>
+      <div class="map-road v" style="left:68%"></div>
+      <!-- Heatmap blackspots -->
+      <div style="position:absolute;top:30%;left:30%;transform:translate(-50%,-50%);width:80px;height:80px;border-radius:50%;background:rgba(186,26,26,.18);border:2px solid rgba(186,26,26,.35)"></div>
+      <div style="position:absolute;top:62%;left:65%;transform:translate(-50%,-50%);width:60px;height:60px;border-radius:50%;background:rgba(186,26,26,.14);border:1px solid rgba(186,26,26,.3)"></div>
+      <div style="position:absolute;top:50%;left:55%;transform:translate(-50%,-50%);width:48px;height:48px;border-radius:50%;background:rgba(252,163,17,.2);border:1px solid rgba(133,83,0,.3)"></div>
+      <!-- Route -->
+      <div style="position:absolute;top:calc(40% - 3px);left:35%;width:33%;height:5px;background:#1dc4ff;border-radius:2px"></div>
+      <!-- User -->
+      <div style="position:absolute;top:40%;left:35%;transform:translate(-50%,-50%)"><div class="user-dot"></div></div>
+      <!-- Weather banner -->
+      <div class="weather-banner">
+        <span class="material-symbols-outlined icon-fill" style="font-size:24px;color:#525e7d">cloudy_snowing</span>
+        <div><p class="t-label-lg">Light Rain · 22°C</p><p class="t-body-sm" style="color:#534433">Bengaluru — visibility reduced</p></div>
+      </div>
+      <!-- Legend -->
+      <div style="position:absolute;bottom:8px;left:8px;background:rgba(255,248,244,.9);border-radius:.5rem;padding:6px 10px;display:flex;gap:10px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:4px"><div style="width:12px;height:12px;border-radius:50%;background:rgba(186,26,26,.4);border:1px solid #ba1a1a"></div><span class="t-label-md" style="color:#534433">Blackspot</span></div>
+        <div style="display:flex;align-items:center;gap:4px"><div style="width:16px;height:4px;background:#1dc4ff;border-radius:2px"></div><span class="t-label-md" style="color:#534433">Safe route</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Risk score -->
+  <div class="card-level-1 rounded-xl" style="padding:20px;margin-bottom:16px">
+    <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap">
+      <div style="text-align:center">
+        <div class="risk-score-num risk-mid" id="risk-num">54</div>
+        <p class="t-label-md" style="color:#534433">Trip Risk Score</p>
+      </div>
+      <div style="flex:1;min-width:200px">
+        <div style="display:flex;flex-wrap:wrap;gap:8px">
+          <span class="sub-chip"><span class="material-symbols-outlined" style="font-size:14px">road</span>Road: Moderate</span>
+          <span class="sub-chip"><span class="material-symbols-outlined" style="font-size:14px">traffic</span>Traffic: Low</span>
+          <span class="sub-chip"><span class="material-symbols-outlined" style="font-size:14px">cloudy_snowing</span>Weather: High</span>
+          <span class="sub-chip"><span class="material-symbols-outlined" style="font-size:14px">schedule</span>Time: Low</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Fatigue alert -->
+  <div class="card-level-2 rounded-xl" style="padding:16px;margin-bottom:16px;animation:fadein .4s ease">
+    <div style="display:flex;align-items:flex-start;gap:12px">
+      <span class="material-symbols-outlined icon-fill" style="font-size:28px;color:#ba1a1a;flex-shrink:0">warning</span>
+      <div style="flex:1">
+        <p class="t-label-lg" style="color:#ba1a1a">Fatigue Alert</p>
+        <p class="t-body-md" style="margin:4px 0 14px">3h 12m driving — fatigue risk detected. Your reaction time may be impaired.</p>
+        <div style="display:flex;gap:10px">
+          <button class="btn-primary" style="flex:2;min-height:44px;font-size:15px" onclick="alert('Finding rest stops…')">Take a Break</button>
+          <button class="btn-ghost" style="flex:1" onclick="this.closest('.card-level-2').style.display='none'">Dismiss</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Route stats -->
+  <div class="card-level-1 rounded-xl" style="padding:16px">
+    <p class="t-label-lg" style="margin-bottom:12px">Route Stats</p>
+    <div style="display:flex;gap:8px">
+      <div class="stat-item"><span class="t-headline-md" style="font-size:20px">42 km</span><span class="t-label-md" style="color:#534433">Distance</span></div>
+      <div style="width:1px;background:#d9c3ad"></div>
+      <div class="stat-item"><span class="t-headline-md" style="font-size:20px;color:#ba1a1a">3</span><span class="t-label-md" style="color:#534433">Blackspots</span></div>
+      <div style="width:1px;background:#d9c3ad"></div>
+      <div class="stat-item"><span class="t-headline-md" style="font-size:20px">09:40</span><span class="t-label-md" style="color:#534433">Safe arrival</span></div>
+    </div>
+  </div>
+</main>
+<nav class="bottom-nav">
+  <a href="code.html" class="bnav-item"><span class="material-symbols-outlined" style="font-size:24px">home</span><span>Home</span></a>
+  <a href="prevention.html" class="bnav-item active"><span class="material-symbols-outlined icon-fill" style="font-size:24px">map</span><span>Map</span></a>
+  <div class="bnav-fab"><a href="sos.html" class="bnav-fab-btn" aria-label="SOS"><span class="material-symbols-outlined icon-fill" style="font-size:28px;color:#663f00">emergency</span></a><span class="t-label-md" style="color:#663f00">SOS</span></div>
+  <a href="history.html" class="bnav-item"><span class="material-symbols-outlined" style="font-size:24px">history</span><span>History</span></a>
+  <a href="profile.html" class="bnav-item"><span class="material-symbols-outlined" style="font-size:24px">person</span><span>Profile</span></a>
+</nav>
+</body>
+</html>

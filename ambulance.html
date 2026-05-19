@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Ambulance Finder — RoadSOS</title>
+<meta name="description" content="Find and dispatch verified ambulances near you"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0..1,0" rel="stylesheet"/>
+<link rel="stylesheet" href="shared.css"/>
+<style>
+.amb-card{display:flex;align-items:center;gap:12px;padding:14px 0}
+.amb-card+.amb-card{border-top:1px solid #d9c3ad}
+.amb-icon-wrap{width:44px;height:44px;border-radius:.75rem;background:#fff1e5;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.dispatch-btn{background:#fca311;color:#663f00;border-radius:.5rem;font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:700;padding:8px 14px;white-space:nowrap;transition:background .15s}
+.dispatch-btn:hover{background:#ffb95f}
+.dispatch-btn.dispatched{background:#1dc4ff;color:#001e2b}
+.sheet{position:fixed;bottom:0;left:0;right:0;max-height:70vh;overflow-y:auto;border-radius:.75rem .75rem 0 0;padding:16px 16px 80px;background:#fff;border-top:2px solid #14213D;box-shadow:0 -8px 0 rgba(0,0,0,.15)}
+@media(min-width:768px){.sheet{position:static;border-radius:.75rem;max-height:none;padding:20px;box-shadow:0 8px 0 rgba(0,0,0,.15)}}
+.amb-pin{position:absolute;display:flex;flex-direction:column;align-items:center}
+.amb-tooltip{background:#fff;border:2px solid #14213D;border-radius:.5rem;padding:4px 8px;font-size:11px;font-weight:700;white-space:nowrap;box-shadow:0 4px 0 rgba(0,0,0,.12)}
+</style>
+</head>
+<body class="pb-20">
+<header class="app-header">
+  <div class="header-inner">
+    <a href="code.html" class="wordmark"><span class="material-symbols-outlined icon-fill" style="font-size:24px">emergency</span>RoadSOS</a>
+    <nav class="nav-links"><a href="triage.html">Triage</a><a href="hospital.html">Hospital</a><a href="profile.html">Profile</a></nav>
+    <div style="width:36px;height:36px;border-radius:50%;background:#ffb95f;display:flex;align-items:center;justify-content:center"><span style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:12px;color:#2a1700">AK</span></div>
+  </div>
+</header>
+
+<main style="max-width:1280px;margin:0 auto">
+  <!-- Map -->
+  <div class="map-bg" style="height:360px;position:relative">
+    <div class="map-road h" style="top:35%"></div>
+    <div class="map-road h" style="top:65%"></div>
+    <div class="map-road v" style="left:30%"></div>
+    <div class="map-road v" style="left:60%"></div>
+    <!-- Ambulances -->
+    <div class="amb-pin" style="top:28%;left:20%">
+      <div class="amb-tooltip">CATS Unit 4 · 4 min</div>
+      <span class="material-symbols-outlined icon-fill" style="font-size:28px;color:#006687;margin-top:2px">ambulance</span>
+    </div>
+    <div class="amb-pin" style="top:58%;left:55%">
+      <div class="amb-tooltip">Apollo · 9 min</div>
+      <span class="material-symbols-outlined icon-fill" style="font-size:24px;color:#525e7d;margin-top:2px">ambulance</span>
+    </div>
+    <div class="amb-pin" style="top:20%;left:65%">
+      <div class="amb-tooltip">Air Amb · 12 min</div>
+      <span class="material-symbols-outlined icon-fill" style="font-size:24px;color:#855300;margin-top:2px">emergency</span>
+    </div>
+    <!-- User dot -->
+    <div style="position:absolute;top:50%;left:45%;transform:translate(-50%,-50%)"><div class="user-dot"></div></div>
+    <!-- Drag hint -->
+    <div style="position:absolute;bottom:12px;left:50%;transform:translateX(-50%);background:rgba(255,248,244,.9);border-radius:9999px;padding:4px 14px">
+      <p class="t-label-md" style="color:#534433">↑ Swipe up for list</p>
+    </div>
+  </div>
+
+  <!-- Bottom sheet -->
+  <div class="sheet">
+    <div style="width:40px;height:4px;background:#d9c3ad;border-radius:2px;margin:0 auto 16px"></div>
+    <h1 class="t-headline-md" style="margin-bottom:12px">Verified Providers Near You</h1>
+
+    <!-- Filters -->
+    <div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:16px">
+      <button class="chip-active" id="f-all" onclick="setFilter('all')">All</button>
+      <button class="chip-inactive" id="f-gov" onclick="setFilter('gov')">Government</button>
+      <button class="chip-inactive" id="f-pvt" onclick="setFilter('pvt')">Private</button>
+      <button class="chip-inactive" id="f-air" onclick="setFilter('air')">Air Ambulance</button>
+    </div>
+
+    <!-- Cards -->
+    <div class="card-level-1 rounded-xl" style="padding:0 16px">
+      <div class="amb-card">
+        <div class="amb-icon-wrap"><span class="material-symbols-outlined icon-fill" style="font-size:24px;color:#006687">ambulance</span></div>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+            <span class="t-label-lg">CATS Unit 4</span>
+            <span class="verified-badge"><span class="material-symbols-outlined icon-fill" style="font-size:13px">verified_user</span>Verified</span>
+          </div>
+          <p class="t-body-sm" style="color:#534433">Government · 1.2 km away</p>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+          <span class="eta-pill">4 min</span>
+          <span class="t-body-sm" style="color:#534433">Free</span>
+          <button class="dispatch-btn" id="d1" onclick="dispatch('d1')">Dispatch</button>
+        </div>
+      </div>
+      <div class="amb-card">
+        <div class="amb-icon-wrap"><span class="material-symbols-outlined icon-fill" style="font-size:24px;color:#525e7d">ambulance</span></div>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+            <span class="t-label-lg">Apollo Reach</span>
+            <span class="verified-badge"><span class="material-symbols-outlined icon-fill" style="font-size:13px">verified_user</span>Verified</span>
+          </div>
+          <p class="t-body-sm" style="color:#534433">Private · 2.8 km away</p>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+          <span class="eta-pill">9 min</span>
+          <span class="t-body-sm" style="color:#534433">₹800</span>
+          <button class="dispatch-btn" id="d2" onclick="dispatch('d2')">Dispatch</button>
+        </div>
+      </div>
+      <div class="amb-card">
+        <div class="amb-icon-wrap"><span class="material-symbols-outlined icon-fill" style="font-size:24px;color:#855300">emergency</span></div>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+            <span class="t-label-lg">Air Ambulance BLR</span>
+            <span class="verified-badge"><span class="material-symbols-outlined icon-fill" style="font-size:13px">verified_user</span>Verified</span>
+          </div>
+          <p class="t-body-sm" style="color:#534433">Air · 5.1 km away</p>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+          <span class="eta-pill">12 min</span>
+          <span class="t-body-sm" style="color:#534433">₹4,500</span>
+          <button class="dispatch-btn" id="d3" onclick="dispatch('d3')">Dispatch</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<nav class="bottom-nav">
+  <a href="code.html" class="bnav-item"><span class="material-symbols-outlined" style="font-size:24px">home</span><span>Home</span></a>
+  <a href="prevention.html" class="bnav-item"><span class="material-symbols-outlined" style="font-size:24px">map</span><span>Map</span></a>
+  <div class="bnav-fab"><a href="sos.html" class="bnav-fab-btn" aria-label="SOS"><span class="material-symbols-outlined icon-fill" style="font-size:28px;color:#663f00">emergency</span></a><span class="t-label-md" style="color:#663f00">SOS</span></div>
+  <a href="history.html" class="bnav-item"><span class="material-symbols-outlined" style="font-size:24px">history</span><span>History</span></a>
+  <a href="profile.html" class="bnav-item"><span class="material-symbols-outlined" style="font-size:24px">person</span><span>Profile</span></a>
+</nav>
+
+<script>
+const filters=['all','gov','pvt','air'];
+function setFilter(f){
+  filters.forEach(x=>{
+    const el=document.getElementById('f-'+x);
+    el.className=x===f?'chip-active':'chip-inactive';
+  });
+}
+function dispatch(id){
+  const btn=document.getElementById(id);
+  if(btn.classList.contains('dispatched')){return;}
+  btn.textContent='Dispatched ✓';
+  btn.classList.add('dispatched');
+  setTimeout(()=>window.location.href='sos.html',800);
+}
+</script>
+</body>
+</html>

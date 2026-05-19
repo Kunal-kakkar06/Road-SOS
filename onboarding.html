@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Welcome — RoadSOS</title>
+<meta name="description" content="RoadSOS — emergency response that arrives before you can ask"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0..1,0" rel="stylesheet"/>
+<link rel="stylesheet" href="shared.css"/>
+<style>
+html,body{height:100%;overflow:hidden}
+body{background:#fff8f4;display:flex;flex-direction:column}
+.slides-wrap{flex:1;overflow:hidden;position:relative}
+.slide{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 32px;text-align:center;transition:transform .4s cubic-bezier(.4,0,.2,1),opacity .4s}
+.slide.prev{transform:translateX(-100%);opacity:0}
+.slide.active{transform:translateX(0);opacity:1}
+.slide.next{transform:translateX(100%);opacity:0}
+.slide-icon-bg{width:180px;height:180px;border-radius:32px;background:#fca311;display:flex;align-items:center;justify-content:center;margin:0 auto 32px;box-shadow:0 8px 0 rgba(0,0,0,.12)}
+.skip-btn{position:absolute;top:16px;right:16px;background:transparent;color:#534433;font-size:14px;font-weight:600;border:none;cursor:pointer;padding:8px}
+.bottom-zone{padding:24px 32px 40px;background:#fff8f4}
+.dots{display:flex;gap:8px;justify-content:center;margin-bottom:24px}
+.dot{height:8px;border-radius:4px;background:#e7d7c9;transition:all .3s}
+.dot.active{width:24px;background:#fca311}
+.dot:not(.active){width:8px}
+</style>
+</head>
+<body>
+<!-- Skip -->
+<button class="skip-btn" onclick="window.location.href='code.html'" aria-label="Skip onboarding">Skip</button>
+
+<div class="slides-wrap">
+  <!-- Slide 1 -->
+  <div class="slide active" id="slide-0">
+    <div class="slide-icon-bg">
+      <span class="material-symbols-outlined icon-fill" style="font-size:96px;color:#663f00">emergency</span>
+    </div>
+    <h1 style="font-family:'Space Grotesk',sans-serif;font-size:clamp(28px,6vw,48px);font-weight:700;letter-spacing:-.02em;line-height:1.1;color:#221a11;margin-bottom:16px">
+      Help that arrives before you can ask
+    </h1>
+    <p style="font-size:18px;line-height:28px;color:#534433;max-width:400px">
+      RoadSOS detects crashes automatically and dispatches the nearest ambulance — even before you press a button.
+    </p>
+  </div>
+
+  <!-- Slide 2 -->
+  <div class="slide next" id="slide-1">
+    <div style="display:flex;gap:16px;justify-content:center;margin-bottom:32px">
+      <div style="width:88px;height:88px;border-radius:24px;background:#1dc4ff;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 0 rgba(0,0,0,.1)">
+        <span class="material-symbols-outlined icon-fill" style="font-size:48px;color:#001e2b">psychology</span>
+      </div>
+      <div style="width:88px;height:88px;border-radius:24px;background:#fca311;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 0 rgba(0,0,0,.1)">
+        <span class="material-symbols-outlined icon-fill" style="font-size:48px;color:#663f00">ambulance</span>
+      </div>
+    </div>
+    <h1 style="font-family:'Space Grotesk',sans-serif;font-size:clamp(26px,5vw,40px);font-weight:700;letter-spacing:-.02em;line-height:1.15;color:#221a11;margin-bottom:16px">
+      AI reads the scene — ambulance arrives prepared
+    </h1>
+    <p style="font-size:18px;line-height:28px;color:#534433;max-width:400px">
+      Our AI triages your injuries from a photo or voice and pre-alerts the hospital so doctors are ready the moment you arrive.
+    </p>
+  </div>
+
+  <!-- Slide 3 -->
+  <div class="slide next" id="slide-2">
+    <div style="display:flex;gap:16px;justify-content:center;margin-bottom:32px">
+      <div style="width:120px;height:120px;border-radius:28px;background:#f0e0d1;display:flex;align-items:center;justify-content:center;border:2px solid #d9c3ad;box-shadow:0 6px 0 rgba(0,0,0,.08)">
+        <span class="material-symbols-outlined icon-fill" style="font-size:64px;color:#534433">wifi_off</span>
+      </div>
+    </div>
+    <h1 style="font-family:'Space Grotesk',sans-serif;font-size:clamp(26px,5vw,40px);font-weight:700;letter-spacing:-.02em;line-height:1.15;color:#221a11;margin-bottom:16px">
+      Works even when the signal doesn't
+    </h1>
+    <p style="font-size:18px;line-height:28px;color:#534433;max-width:400px">
+      No internet? No problem. RoadSOS falls back to SMS to send your SOS, GPS location, and medical ID to emergency services and family — automatically.
+    </p>
+    <div style="display:flex;align-items:center;gap:8px;margin-top:20px;background:#f0e0d1;border-radius:.75rem;padding:12px 16px">
+      <span class="material-symbols-outlined icon-fill" style="font-size:20px;color:#006687">sms</span>
+      <span style="font-size:14px;font-weight:600;color:#534433">SMS fallback · Works on 2G · No app needed</span>
+    </div>
+  </div>
+</div>
+
+<!-- Bottom zone -->
+<div class="bottom-zone">
+  <div class="dots">
+    <div class="dot active" id="d0"></div>
+    <div class="dot" id="d1"></div>
+    <div class="dot" id="d2"></div>
+  </div>
+  <button id="next-btn" onclick="nextSlide()"
+    style="width:100%;min-height:56px;background:#fca311;color:#663f00;border-radius:.75rem;font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:700;border:2px solid #14213D;box-shadow:0 6px 0 rgba(0,0,0,.12);transition:background .15s"
+    aria-label="Next slide">
+    Next
+  </button>
+</div>
+
+<script>
+let cur=0;
+const total=3;
+function nextSlide(){
+  if(cur<total-1){
+    document.getElementById('slide-'+cur).className='slide prev';
+    cur++;
+    document.getElementById('slide-'+cur).className='slide active';
+    for(let i=0;i<total;i++){
+      const d=document.getElementById('d'+i);
+      d.className='dot'+(i===cur?' active':'');
+    }
+    if(cur===total-1){
+      document.getElementById('next-btn').textContent='Get Started';
+    }
+  } else {
+    window.location.href='code.html';
+  }
+}
+</script>
+</body>
+</html>
