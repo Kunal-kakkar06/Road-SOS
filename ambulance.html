@@ -19,6 +19,18 @@
 @media(min-width:768px){.sheet{position:static;border-radius:.75rem;max-height:none;padding:20px;box-shadow:0 8px 0 rgba(0,0,0,.15)}}
 .amb-pin{position:absolute;display:flex;flex-direction:column;align-items:center}
 .amb-tooltip{background:#fff;border:2px solid #14213D;border-radius:.5rem;padding:4px 8px;font-size:11px;font-weight:700;white-space:nowrap;box-shadow:0 4px 0 rgba(0,0,0,.12)}
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+@keyframes pulse {
+  0% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(0.98); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.animate-pulse {
+  animation: pulse 1.5s infinite ease-in-out;
+}
 </style>
 </head>
 <body class="pb-20">
@@ -62,6 +74,14 @@
   <div class="sheet">
     <div style="width:40px;height:4px;background:#d9c3ad;border-radius:2px;margin:0 auto 16px"></div>
     <h1 class="t-headline-md" style="margin-bottom:12px">Verified Providers Near You</h1>
+    
+    <!-- SOS Emergency Dispatch Section -->
+    <div id="sos-dispatch-container" style="margin-bottom: 20px;">
+      <button class="btn-primary" id="sos-dispatch-btn" onclick="startEmergencyDispatch()" style="background: #e63946; color: #fff; width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 6px rgba(230,57,70,0.2); border-radius: 12px;">
+        <span class="material-symbols-outlined icon-fill animate-pulse">emergency</span>
+        <span>Instant SOS Ambulance Dispatch</span>
+      </button>
+    </div>
 
     <!-- Filters -->
     <div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:16px">
@@ -85,7 +105,7 @@
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
           <span class="eta-pill">4 min</span>
           <span class="t-body-sm" style="color:#534433">Free</span>
-          <button class="dispatch-btn" id="d1" onclick="dispatch('d1')">Dispatch</button>
+          <button class="dispatch-btn" id="d1" onclick="startEmergencyDispatch()">Dispatch</button>
         </div>
       </div>
       <div class="amb-card">
@@ -100,7 +120,7 @@
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
           <span class="eta-pill">9 min</span>
           <span class="t-body-sm" style="color:#534433">₹800</span>
-          <button class="dispatch-btn" id="d2" onclick="dispatch('d2')">Dispatch</button>
+          <button class="dispatch-btn" id="d2" onclick="startEmergencyDispatch()">Dispatch</button>
         </div>
       </div>
       <div class="amb-card">
@@ -115,7 +135,7 @@
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
           <span class="eta-pill">12 min</span>
           <span class="t-body-sm" style="color:#534433">₹4,500</span>
-          <button class="dispatch-btn" id="d3" onclick="dispatch('d3')">Dispatch</button>
+          <button class="dispatch-btn" id="d3" onclick="startEmergencyDispatch()">Dispatch</button>
         </div>
       </div>
     </div>
@@ -144,6 +164,146 @@ function dispatch(id){
   btn.textContent='Dispatched ✓';
   btn.classList.add('dispatched');
   setTimeout(()=>window.location.href='sos.html',800);
+}
+
+function startEmergencyDispatch() {
+  const container = document.getElementById('sos-dispatch-container');
+  
+  // Show loading spinner
+  container.innerHTML = `
+    <div style="text-align: center; padding: 20px; background: #FFFDFB; border: 2px dashed #fca311; border-radius: 12px; display: flex; flex-direction: column; align-items: center; gap: 12px;">
+      <div class="spinner" style="width: 40px; height: 40px; border: 4px solid #fca311; border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite; box-sizing: border-box;"></div>
+      <p class="t-label-lg" style="color: #14213D; font-size: 15px; margin: 0;">Locating your GPS coordinates...</p>
+    </div>
+  `;
+
+  // Get current position
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        submitDispatchRequest(lat, lng);
+      },
+      (error) => {
+        console.warn("Geolocation failed or denied. Using fallback coordinates (Bengaluru).");
+        // Fallback to Bengaluru Koramangala coordinate as fallback
+        submitDispatchRequest(12.9352, 77.6245);
+      },
+      { enableHighAccuracy: true, timeout: 8000 }
+    );
+  } else {
+    console.warn("Geolocation not supported. Using fallback coordinates.");
+    submitDispatchRequest(12.9352, 77.6245);
+  }
+}
+
+async function submitDispatchRequest(lat, lng) {
+  const container = document.getElementById('sos-dispatch-container');
+  container.innerHTML = `
+    <div style="text-align: center; padding: 20px; background: #FFFDFB; border: 2px dashed #fca311; border-radius: 12px; display: flex; flex-direction: column; align-items: center; gap: 12px;">
+      <div class="spinner" style="width: 40px; height: 40px; border: 4px solid #e63946; border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite; box-sizing: border-box;"></div>
+      <p class="t-label-lg" style="color: #14213D; font-size: 15px; margin: 0;">Contacting nearest ambulance fleet...</p>
+    </div>
+  `;
+
+  try {
+    const response = await fetch('http://localhost:8000/api/ambulance/request', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        lat: lat,
+        lng: lng,
+        address: 'Current location',
+        patient_name: 'User',
+        patient_phone: '9999999999',
+        severity: 3
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    
+    if (data.assigned_ambulance) {
+      showDispatchSuccess(data);
+    } else {
+      showDispatchFailure("No available ambulances found nearby.");
+    }
+  } catch (error) {
+    console.error("API Error:", error);
+    showDispatchFailure("Could not connect to dispatch servers.");
+  }
+}
+
+function showDispatchSuccess(data) {
+  const container = document.getElementById('sos-dispatch-container');
+  container.innerHTML = `
+    <div style="background: #F4FBF7; border: 2px solid #2a9d8f; border-radius: 12px; padding: 16px; box-shadow: 0 4px 12px rgba(42, 157, 143, 0.1); display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px;">
+      <div style="display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span class="material-symbols-outlined icon-fill" style="color: #2a9d8f; font-size: 28px;">check_circle</span>
+          <span class="t-headline-md" style="color: #2a9d8f; font-size: 18px; margin: 0;">Ambulance Dispatched</span>
+        </div>
+        <span class="eta-pill" style="background: #2a9d8f; color: #fff; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 700;">ETA: ${data.eta_minutes} min</span>
+      </div>
+      
+      <div class="card-level-1" style="border-radius: 8px; padding: 12px; background: #fff; border: 1px solid rgba(42, 157, 143, 0.2); display: flex; gap: 12px; align-items: center;">
+        <div class="amb-icon-wrap" style="background: #e6f6f4; width: 44px; height: 44px; border-radius: 8px; display: flex; align-items: center; justify-content: center;"><span class="material-symbols-outlined icon-fill" style="font-size:24px;color:#2a9d8f">ambulance</span></div>
+        <div style="flex: 1; min-width: 0;">
+          <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+            <span class="t-label-lg" style="font-size: 15px;">${data.assigned_ambulance.provider_name}</span>
+            <span class="verified-badge" style="background: #D4EDDA; color: #155724; border: 1px solid #c3e6cb; padding: 2px 6px; border-radius: 4px; display: inline-flex; align-items: center; gap: 2px; font-weight: 700; text-transform: uppercase; font-size: 9px; line-height: 1;">
+              <span class="material-symbols-outlined icon-fill" style="font-size: 10px;">verified_user</span>Verified
+            </span>
+          </div>
+          <p class="t-body-sm" style="color: #534433; margin: 4px 0 0 0; font-weight: 700;">Vehicle: ${data.assigned_ambulance.vehicle_number}</p>
+          <p class="t-body-sm" style="color: #666; margin: 2px 0 0 0;">Driver: ${data.assigned_ambulance.driver_name}</p>
+        </div>
+        <div style="flex-shrink: 0;">
+          <a href="tel:${data.assigned_ambulance.driver_phone}" style="display: inline-flex; align-items: center; gap: 6px; background: #2a9d8f; color: #fff; padding: 8px 12px; border-radius: 8px; font-weight: 700; text-decoration: none; font-size: 13px; box-shadow: 0 2px 4px rgba(42,157,143,0.2);">
+            <span class="material-symbols-outlined" style="font-size: 16px;">call</span> Call
+          </a>
+        </div>
+      </div>
+      
+      <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: #666; background: #fff; padding: 8px 12px; border-radius: 6px; border: 1px solid #eee;">
+        <span>Distance: <strong>${data.assigned_ambulance.distance_km} km away</strong></span>
+        <span>Request ID: <strong>#${data.dispatch_request_id}</strong></span>
+      </div>
+    </div>
+  `;
+}
+
+function showDispatchFailure(reason) {
+  const container = document.getElementById('sos-dispatch-container');
+  container.innerHTML = `
+    <div style="background: #FFFDF4; border: 2px solid #fca311; border-radius: 12px; padding: 16px; box-shadow: 0 4px 12px rgba(252, 163, 17, 0.1); display: flex; flex-direction: column; gap: 12px; text-align: center; margin-bottom: 16px;">
+      <div style="display: flex; align-items: center; justify-content: center; gap: 8px; color: #663f00;">
+        <span class="material-symbols-outlined icon-fill" style="font-size: 28px; color: #fca311;">warning</span>
+        <span class="t-headline-md" style="font-size: 18px; margin: 0; font-weight: 700;">Dispatch Failed</span>
+      </div>
+      <p class="t-body-sm" style="color: #663f00; margin: 0;">${reason}</p>
+      <a href="tel:108" style="background: #e63946; color: #fff; font-family: 'Space Grotesk', sans-serif; font-size: 18px; font-weight: 700; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 50px; border-radius: 8px; box-shadow: 0 4px 6px rgba(230,57,70,0.3);">
+        <span class="material-symbols-outlined icon-fill">call</span> Call 108 (Emergency)
+      </a>
+      <button onclick="resetSOSButton()" style="color: #fca311; text-decoration: underline; font-weight: 600; font-size: 13px; cursor: pointer; border: none; background: transparent; padding: 4px;">Try Dispatch Again</button>
+    </div>
+  `;
+}
+
+function resetSOSButton() {
+  const container = document.getElementById('sos-dispatch-container');
+  container.innerHTML = `
+    <button class="btn-primary" id="sos-dispatch-btn" onclick="startEmergencyDispatch()" style="background: #e63946; color: #fff; width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 4px 6px rgba(230,57,70,0.2); border-radius: 12px;">
+      <span class="material-symbols-outlined icon-fill animate-pulse">emergency</span>
+      <span>Instant SOS Ambulance Dispatch</span>
+    </button>
+  `;
 }
 </script>
 </body>
