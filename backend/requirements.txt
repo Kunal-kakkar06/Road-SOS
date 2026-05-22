@@ -1,0 +1,14 @@
+fastapi==0.111.0
+uvicorn[standard]==0.29.0
+python-dotenv==1.0.1
+twilio==9.1.0
+sqlalchemy>=2.0.36
+aiosqlite
+pydantic[email]<2.0.0
+xgboost
+scikit-learn
+numpy
+joblib
+pandas
+anthropic
+PyJWT==2.8.0

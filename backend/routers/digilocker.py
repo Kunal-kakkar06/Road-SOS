@@ -1,0 +1,111 @@
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+import httpx, os, jwt
+
+from database import get_db
+from models.medical_profile import MedicalProfile
+
+router = APIRouter(prefix="/api/digilocker", tags=["DigiLocker"])
+
+DIGILOCKER_CLIENT_ID     = os.getenv("DIGILOCKER_CLIENT_ID")
+DIGILOCKER_CLIENT_SECRET = os.getenv("DIGILOCKER_CLIENT_SECRET")
+DIGILOCKER_REDIRECT_URI  = os.getenv("DIGILOCKER_REDIRECT_URI",
+                            "http://localhost:5173/digilocker/callback")
+SECRET = os.getenv("JWT_SECRET", "roadsos-dev-secret")
+
+
+def get_user(authorization: str = None) -> str:
+    if not authorization: raise HTTPException(401, "Not authenticated")
+    token   = authorization.split(" ")[1]
+    payload = jwt.decode(token, SECRET, algorithms=["HS256"])
+    return payload["user_id"]
+
+
+# ── GET /api/digilocker/auth-url ──────────────────────────────
+# Frontend calls this to get the OAuth2 redirect URL
+@router.get("/auth-url")
+def get_auth_url():
+    base = "https://api.digitallocker.gov.in/public/oauth2/1/authorize"
+    params = (
+        f"?response_type=code"
+        f"&client_id={DIGILOCKER_CLIENT_ID}"
+        f"&redirect_uri={DIGILOCKER_REDIRECT_URI}"
+        f"&state=roadsos_medical"
+        f"&scope=r_HLTHRCD"   # ABHA Health Record scope
+    )
+    return {"auth_url": base + params}
+
+
+# ── POST /api/digilocker/callback ─────────────────────────────
+# Called after user authorises — exchange code for token + fetch ABHA
+@router.post("/callback")
+async def digilocker_callback(
+    code:          str,
+    authorization: str  = None,
+    db:            Session = Depends(get_db),
+):
+    user_id = get_user(authorization)
+
+    # 1. Exchange code for access token
+    async with httpx.AsyncClient() as client:
+        token_res = await client.post(
+            "https://api.digitallocker.gov.in/public/oauth2/1/token",
+            data={
+                "code":          code,
+                "grant_type":    "authorization_code",
+                "client_id":     DIGILOCKER_CLIENT_ID,
+                "client_secret": DIGILOCKER_CLIENT_SECRET,
+                "redirect_uri":  DIGILOCKER_REDIRECT_URI,
+            },
+        )
+        if token_res.status_code != 200:
+            raise HTTPException(400, "DigiLocker auth failed")
+        token_data = token_res.json()
+        access_token = token_data["access_token"]
+
+        # 2. Fetch ABHA health record
+        health_res = await client.get(
+            "https://api.digitallocker.gov.in/public/oauth2/1/xml/HLTHRCD",
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+
+    # 3. Parse XML health record → extract fields
+    # (In production use xml.etree.ElementTree to parse ABHA XML)
+    # For prototype return mock-parsed data:
+    parsed = parse_abha_record(health_res.text)
+
+    # 4. Update DB profile with DigiLocker data
+    profile = db.query(MedicalProfile).filter(
+        MedicalProfile.user_id == user_id
+    ).first()
+    if profile:
+        profile.digilocker_linked = True
+        profile.abha_id           = parsed.get("abha_id")
+        # Only pre-fill fields that are empty — don't overwrite user data
+        if not profile.blood_type:   profile.blood_type  = parsed.get("blood_type")
+        if not profile.allergies:    profile.allergies   = parsed.get("allergies", [])
+        if not profile.conditions:   profile.conditions  = parsed.get("conditions", [])
+        if not profile.medications:  profile.medications = parsed.get("medications", [])
+        db.commit()
+
+    return {
+        "success":    True,
+        "abha_id":    parsed.get("abha_id"),
+        "prefilled":  parsed,
+        "message":    "DigiLocker data imported. Review and save your profile.",
+    }
+
+
+def parse_abha_record(xml_text: str) -> dict:
+    """
+    Parse ABHA XML health record.
+    In prototype — returns mock data for UI testing.
+    Replace with real XML parsing using xml.etree.ElementTree in production.
+    """
+    return {
+        "abha_id":    "12-3456-7890-1234",
+        "blood_type": "B+",
+        "allergies":  ["Penicillin"],
+        "conditions": ["Hypertension"],
+        "medications":["Metformin 500mg"],
+    }

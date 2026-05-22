@@ -25,60 +25,42 @@
     <div style="width:36px;height:36px;border-radius:50%;background:#ffb95f;display:flex;align-items:center;justify-content:center"><span style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:12px;color:#2a1700">AK</span></div>
   </div>
 </header>
-<main class="page">
+<main class="page" id="main-content">
   <a href="index.html" style="display:inline-flex;align-items:center;gap:6px;color:#534433;font-size:14px;font-weight:600;margin-bottom:16px"><span class="material-symbols-outlined" style="font-size:18px">arrow_back</span>Back</a>
   <h1 class="t-headline-md" style="margin-bottom:16px">Medical Profile</h1>
-  <div class="card-level-1 rounded-xl sec" style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
-    <div style="width:64px;height:64px;border-radius:50%;background:#ffb95f;display:flex;align-items:center;justify-content:center;flex-shrink:0"><span style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:22px;color:#2a1700">AK</span></div>
-    <div style="flex:1">
-      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-        <span class="t-headline-md">Arjun Kumar</span>
-        <span style="background:#ba1a1a;color:#fff;border-radius:9999px;padding:4px 14px;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:16px">B+</span>
-      </div>
-      <p class="t-body-sm" style="color:#534433;margin-top:4px">DOB: 14 Mar 1990 · Male</p>
-    </div>
-    <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
-      <span class="t-label-md" style="color:#534433">Lock screen</span>
-      <label class="toggle"><input type="checkbox" checked/><div class="toggle-track"></div></label>
-    </label>
-  </div>
-  <div class="card-level-1 rounded-xl sec">
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><span class="material-symbols-outlined icon-fill" style="font-size:20px;color:#ba1a1a">warning</span><span class="t-label-lg">Allergies</span></div>
-    <div style="display:flex;flex-direction:column;gap:8px">
-      <div style="display:flex;gap:8px"><div class="allergy-dot"></div><span class="t-body-md">Penicillin — Severe (anaphylaxis)</span></div>
-      <div style="display:flex;gap:8px"><div class="allergy-dot"></div><span class="t-body-md">Sulpha drugs — Moderate rash</span></div>
-      <div style="display:flex;gap:8px"><div class="allergy-dot"></div><span class="t-body-md">Latex — Mild contact allergy</span></div>
-    </div>
-  </div>
-  <div class="card-level-1 rounded-xl sec">
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><span class="material-symbols-outlined icon-fill" style="font-size:20px;color:#006687">medication</span><span class="t-label-lg">Medications</span></div>
-    <div style="display:flex;flex-direction:column;gap:8px">
-      <div style="display:flex;gap:8px"><span class="material-symbols-outlined" style="font-size:16px;color:#534433">medication</span><span class="t-body-md">Metformin 500mg — twice daily</span></div>
-      <div style="display:flex;gap:8px"><span class="material-symbols-outlined" style="font-size:16px;color:#534433">medication</span><span class="t-body-md">Amlodipine 5mg — once daily</span></div>
-    </div>
-  </div>
-  <div class="card-level-1 rounded-xl sec">
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><span class="material-symbols-outlined icon-fill" style="font-size:20px;color:#006687">favorite</span><span class="t-label-lg">Conditions</span></div>
-    <div style="display:flex;flex-direction:column;gap:6px"><span class="t-body-md">Type 2 Diabetes (managed)</span><span class="t-body-md">Hypertension Stage 1</span></div>
-  </div>
-  <div class="card-level-1 rounded-xl sec">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><span class="t-label-lg">Emergency Contacts</span><button onclick="alert('Add contact')" style="color:#006687;font-size:12px;font-weight:600">+ Add</button></div>
-    <div style="display:flex;flex-wrap:wrap;gap:8px">
-      <div class="contact-pill"><div style="width:32px;height:32px;border-radius:50%;background:#ffb95f;display:flex;align-items:center;justify-content:center"><span style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:11px;color:#2a1700">SK</span></div><div><p class="t-label-lg" style="line-height:1.1">Sarah K</p><p class="t-body-sm" style="color:#534433">+91 98765 43210</p></div><button aria-label="Call Sarah K"><span class="material-symbols-outlined" style="font-size:18px;color:#14213D">call</span></button></div>
-      <div class="contact-pill"><div style="width:32px;height:32px;border-radius:50%;background:#cdd9fe;display:flex;align-items:center;justify-content:center"><span style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:11px;color:#0e1b37">DM</span></div><div><p class="t-label-lg" style="line-height:1.1">David M</p><p class="t-body-sm" style="color:#534433">+91 87654 32109</p></div><button aria-label="Call David M"><span class="material-symbols-outlined" style="font-size:18px;color:#14213D">call</span></button></div>
-    </div>
-  </div>
-  <div class="card-level-1 rounded-xl sec">
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><span class="material-symbols-outlined" style="font-size:20px;color:#534433">language</span><span class="t-label-lg">Report Language</span></div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="lang-chip on" onclick="setLang(this)">EN</button>
-      <button class="lang-chip" onclick="setLang(this)">HI</button>
-      <button class="lang-chip" onclick="setLang(this)">KN</button>
-      <button class="lang-chip" onclick="setLang(this)">TA</button>
+  <div id="profile-view" style="display:none;"></div>
+  <div id="profile-form-view" style="display:none;">
+    <div class="card-level-1 rounded-xl sec">
+      <h2 class="t-label-lg" style="margin-bottom:12px;" id="form-title">Create Medical Profile</h2>
+      <form id="med-profile-form">
+        <label style="display:block;margin-bottom:8px;font-size:14px;">Full Name *
+          <input required type="text" id="p_name" style="width:100%;padding:8px;margin-top:4px;border:1px solid #ccc;border-radius:4px;"/>
+        </label>
+        <label style="display:block;margin-bottom:8px;font-size:14px;">Date of Birth
+          <input type="date" id="p_dob" style="width:100%;padding:8px;margin-top:4px;border:1px solid #ccc;border-radius:4px;"/>
+        </label>
+        <label style="display:block;margin-bottom:8px;font-size:14px;">Blood Type
+          <select id="p_blood" style="width:100%;padding:8px;margin-top:4px;border:1px solid #ccc;border-radius:4px;">
+            <option value="">Select...</option>
+            <option value="A+">A+</option><option value="A-">A-</option>
+            <option value="B+">B+</option><option value="B-">B-</option>
+            <option value="AB+">AB+</option><option value="AB-">AB-</option>
+            <option value="O+">O+</option><option value="O-">O-</option>
+          </select>
+        </label>
+        <label style="display:block;margin-bottom:8px;font-size:14px;">Allergies
+          <textarea id="p_allergies" style="width:100%;padding:8px;margin-top:4px;border:1px solid #ccc;border-radius:4px;" rows="3"></textarea>
+        </label>
+        <label style="display:block;margin-bottom:8px;font-size:14px;">Medications
+          <textarea id="p_meds" style="width:100%;padding:8px;margin-top:4px;border:1px solid #ccc;border-radius:4px;" rows="3"></textarea>
+        </label>
+        <button type="submit" style="width:100%;padding:12px;background:#ba1a1a;color:#fff;border:none;border-radius:8px;font-weight:bold;margin-top:12px;cursor:pointer;">Save Profile</button>
+        <button type="button" id="btn-cancel" style="width:100%;padding:12px;background:#E5E5E5;color:#14213D;border:none;border-radius:8px;font-weight:bold;margin-top:8px;cursor:pointer;">Cancel</button>
+      </form>
     </div>
   </div>
 </main>
-<button class="fab" aria-label="Edit medical profile" onclick="alert('Edit mode')"><span class="material-symbols-outlined icon-fill" style="font-size:24px;color:#663f00">edit</span></button>
+<button class="fab" id="fab-edit" aria-label="Edit medical profile" style="display:none;"><span class="material-symbols-outlined icon-fill" style="font-size:24px;color:#663f00">edit</span></button>
 <nav class="bottom-nav">
   <a href="index.html" class="bnav-item"><span class="material-symbols-outlined" style="font-size:24px">home</span><span>Home</span></a>
   <a href="prevention.html" class="bnav-item"><span class="material-symbols-outlined" style="font-size:24px">map</span><span>Map</span></a>
@@ -86,6 +68,120 @@
   <a href="history.html" class="bnav-item"><span class="material-symbols-outlined" style="font-size:24px">history</span><span>History</span></a>
   <a href="profile.html" class="bnav-item active"><span class="material-symbols-outlined icon-fill" style="font-size:24px">person</span><span>Profile</span></a>
 </nav>
-<script>function setLang(el){document.querySelectorAll('.lang-chip').forEach(c=>c.className='lang-chip');el.className='lang-chip on'}</script>
+<script>
+const API_BASE = "http://localhost:8000/api";
+const USER_ID = "local_user_01";
+let currentProfile = null;
+
+const viewDiv = document.getElementById('profile-view');
+const formDiv = document.getElementById('profile-form-view');
+const form = document.getElementById('med-profile-form');
+const fab = document.getElementById('fab-edit');
+const btnCancel = document.getElementById('btn-cancel');
+
+async function loadProfile() {
+  try {
+    const res = await fetch(`${API_BASE}/profile/${USER_ID}`);
+    if (res.ok) {
+      currentProfile = await res.json();
+      renderProfile(currentProfile);
+      viewDiv.style.display = 'block';
+      formDiv.style.display = 'none';
+      fab.style.display = 'flex';
+    } else {
+      // 404 or other error, show form to create
+      showForm();
+      btnCancel.style.display = 'none'; // can't cancel if creating
+    }
+  } catch (e) {
+    console.error(e);
+    showForm();
+  }
+}
+
+function renderProfile(p) {
+  let initials = p.full_name ? p.full_name.substring(0,2).toUpperCase() : 'ME';
+  let btype = p.blood_type || 'ID';
+  
+  viewDiv.innerHTML = `
+    <div class="card-level-1 rounded-xl sec" style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+      <div style="width:64px;height:64px;border-radius:50%;background:#ffb95f;display:flex;align-items:center;justify-content:center;flex-shrink:0"><span style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:22px;color:#2a1700">${initials}</span></div>
+      <div style="flex:1">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <span class="t-headline-md">${p.full_name}</span>
+          <span style="background:#ba1a1a;color:#fff;border-radius:9999px;padding:4px 14px;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:16px">${btype}</span>
+        </div>
+        <p class="t-body-sm" style="color:#534433;margin-top:4px">DOB: ${p.date_of_birth || 'Not set'}</p>
+      </div>
+    </div>
+    <div class="card-level-1 rounded-xl sec">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><span class="material-symbols-outlined icon-fill" style="font-size:20px;color:#ba1a1a">warning</span><span class="t-label-lg">Allergies</span></div>
+      <p class="t-body-md">${p.allergies || 'None listed'}</p>
+    </div>
+    <div class="card-level-1 rounded-xl sec">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><span class="material-symbols-outlined icon-fill" style="font-size:20px;color:#006687">medication</span><span class="t-label-lg">Medications</span></div>
+      <p class="t-body-md">${p.medications || 'None listed'}</p>
+    </div>
+  `;
+}
+
+function showForm() {
+  if (currentProfile) {
+    document.getElementById('p_name').value = currentProfile.full_name || '';
+    document.getElementById('p_dob').value = currentProfile.date_of_birth || '';
+    document.getElementById('p_blood').value = currentProfile.blood_type || '';
+    document.getElementById('p_allergies').value = currentProfile.allergies || '';
+    document.getElementById('p_meds').value = currentProfile.medications || '';
+    document.getElementById('form-title').innerText = "Edit Medical Profile";
+    btnCancel.style.display = 'block';
+  } else {
+    document.getElementById('form-title').innerText = "Create Medical Profile";
+  }
+  viewDiv.style.display = 'none';
+  fab.style.display = 'none';
+  formDiv.style.display = 'block';
+}
+
+fab.onclick = showForm;
+btnCancel.onclick = () => {
+  viewDiv.style.display = 'block';
+  formDiv.style.display = 'none';
+  fab.style.display = 'flex';
+};
+
+form.onsubmit = async (e) => {
+  e.preventDefault();
+  const payload = {
+    user_id: USER_ID,
+    full_name: document.getElementById('p_name').value,
+    date_of_birth: document.getElementById('p_dob').value || null,
+    blood_type: document.getElementById('p_blood').value,
+    allergies: document.getElementById('p_allergies').value,
+    medications: document.getElementById('p_meds').value,
+  };
+  if (!payload.date_of_birth) delete payload.date_of_birth;
+
+  const method = currentProfile ? 'PUT' : 'POST';
+  const url = currentProfile ? `${API_BASE}/profile/${USER_ID}` : `${API_BASE}/profile/`;
+  
+  try {
+    const res = await fetch(url, {
+      method: method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (res.ok) {
+      loadProfile();
+    } else {
+      alert("Error saving profile");
+    }
+  } catch (e) {
+    alert("Network error");
+  }
+};
+
+// Initial load
+loadProfile();
+</script>
 </body>
 </html>
