@@ -12,3 +12,8 @@ joblib
 pandas
 anthropic
 PyJWT==2.8.0
+gTTS
+geopy
+firebase-admin
+numpy
+scipy

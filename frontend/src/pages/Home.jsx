@@ -3,10 +3,12 @@ import { Link, useOutletContext } from 'react-router-dom';
 import MedicalIDCard from '../components/MedicalIDCard';
 import TriageAssistant from '../components/TriageAssistant';
 import SOSButton from '../components/SOSButton';
+import VoiceGuidance from '../components/VoiceGuidance';
 
 export default function Home() {
   const { isOnline } = useOutletContext();
   const [showTriage, setShowTriage] = useState(false);
+  const [showVoiceGuidance, setShowVoiceGuidance] = useState(false);
 
   return (
     <div className="fade-in">
@@ -67,10 +69,10 @@ export default function Home() {
                   <span className="quick-action-item-label">Find Hospital</span>
                 </div>
               )}
-              <Link to="/first-aid" className="quick-action-item">
-                <span className="material-symbols-outlined" style={{fontSize:28}}>health_and_safety</span>
-                <span className="quick-action-item-label">First Aid</span>
-              </Link>
+              <div className="quick-action-item" onClick={() => setShowVoiceGuidance(true)}>
+                <span className="material-symbols-outlined" style={{fontSize:28}}>headphones</span>
+                <span className="quick-action-item-label">Voice Aid</span>
+              </div>
               {isOnline ? (
                 <Link to="/ambulance" className="quick-action-item">
                   <span className="material-symbols-outlined" style={{fontSize:28}}>ambulance</span>
@@ -209,7 +211,14 @@ export default function Home() {
       </div>
 
       {/* AI Triage Modal */}
-      <TriageAssistant isOpen={showTriage} onClose={() => setShowTriage(false)} />
+      {showTriage && <TriageAssistant 
+        onClose={() => setShowTriage(false)} 
+        onStartVoiceGuidance={() => {
+          setShowTriage(false);
+          setShowVoiceGuidance(true);
+        }}
+      />}
+      {showVoiceGuidance && <VoiceGuidance onClose={() => setShowVoiceGuidance(false)} />}
     </div>
   );
 }

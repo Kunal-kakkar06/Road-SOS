@@ -1,8 +1,11 @@
+import { useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import useNetworkStatus from '../hooks/useNetworkStatus';
+import AntiGravity from './AntiGravity';
 
 export default function AppLayout() {
   const isOnline = useNetworkStatus();
+  const [showAntiGravity, setShowAntiGravity] = useState(false);
 
   return (
     <div className="app-shell">
@@ -15,11 +18,21 @@ export default function AppLayout() {
             <NavLink to="/history" className="dash-nav-link">Incident History</NavLink>
             <NavLink to="/medical-profile" className="dash-nav-link">Medical ID</NavLink>
           </nav>
+          <button 
+            className="anti-gravity-toggle"
+            onClick={() => setShowAntiGravity(true)}
+            style={{background:'none', border:'none', cursor:'pointer', display:'flex', alignItems:'center', gap:8}}
+          >
+            <span className="material-symbols-outlined" style={{fontSize:24, color:'#fca311'}}>paragliding</span>
+            <span style={{fontFamily:'Space Grotesk,sans-serif', fontWeight:700, color:'#fff'}}>Anti-Gravity</span>
+          </button>
           <div className="dash-avatar">
             <span>AK</span>
           </div>
         </div>
       </header>
+      
+      {showAntiGravity && <AntiGravity onClose={() => setShowAntiGravity(false)} />}
 
       {/* ── Offline Banner ── */}
       {!isOnline && (

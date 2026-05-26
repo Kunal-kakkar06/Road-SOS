@@ -6,7 +6,8 @@ from contextlib import asynccontextmanager
 from database import engine, Base
 from dotenv import load_dotenv
 
-from routers import ambulance, dispatch, medical_profile, digilocker
+from routers import ambulance, dispatch, medical_profile, digilocker, voice_guidance, anti_gravity, hospitals
+from fastapi.staticfiles import StaticFiles
 
 load_dotenv()
 
@@ -46,11 +47,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Mount static files (audio, etc.)
+os.makedirs("static", exist_ok=True)
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
 # Register routers
 app.include_router(ambulance.router)
 app.include_router(dispatch.router)
 app.include_router(medical_profile.router)
 app.include_router(digilocker.router)
+app.include_router(voice_guidance.router)
+app.include_router(anti_gravity.router)
+app.include_router(hospitals.router)
 
 @app.get("/")
 def read_root():

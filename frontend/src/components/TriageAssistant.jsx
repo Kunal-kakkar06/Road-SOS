@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { submitTriage, uploadTriageImage, uploadTriageVoice } from '../services/triageService';
 import { triggerSOS } from '../services/offlineSOS';
 
-export default function TriageAssistant({ isOpen, onClose }) {
+export default function TriageAssistant({ isOpen, onClose, onStartVoiceGuidance }) {
   // Form fields
   const [age, setAge] = useState('');
   const [gender, setGender] = useState('Male');
@@ -498,11 +498,14 @@ export default function TriageAssistant({ isOpen, onClose }) {
 
               {/* Actions Footer */}
               <div style={{ display: 'flex', gap: 12, marginTop: 20 }}>
-                <button onClick={handleReset} style={resetBtn}>
-                  Assess New Patient
+                <button onClick={onStartVoiceGuidance} style={{ ...resetBtn, background: '#fca311', color: '#14213D', flex: 1 }}>
+                  Get Voice Guidance
                 </button>
-                <button onClick={onClose} style={closePanelBtn}>
-                  Return to Dashboard
+                <button onClick={handleReset} style={{ ...resetBtn, flex: 1 }}>
+                  New Patient
+                </button>
+                <button onClick={onClose} style={{ ...closePanelBtn, flex: 1 }}>
+                  Return
                 </button>
               </div>
             </div>
