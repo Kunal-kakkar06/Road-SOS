@@ -17,3 +17,6 @@ geopy
 firebase-admin
 numpy
 scipy
+reportlab==4.1.0
+cloudinary==1.40.0
+python-multipart==0.0.9

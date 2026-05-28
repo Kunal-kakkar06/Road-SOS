@@ -96,3 +96,124 @@ class MedicalProfileResponse(MedicalProfileCreate):
 
     class Config:
         from_attributes = True
+
+class CreateIncidentRequest(BaseModel):
+    user_id:         str
+    sos_event_id:    Optional[str]   = None
+    crash_event_id:  Optional[str]   = None
+    dispatch_id:     Optional[str]   = None
+    latitude:        Optional[float] = None
+    longitude:       Optional[float] = None
+    severity:        Optional[str]   = None
+    speed_at_impact: Optional[float] = None
+    medical_profile: Optional[dict]  = None
+    hospital_name:   Optional[str]   = None
+    ambulance_name:  Optional[str]   = None
+    fir_state:       Optional[str]   = "Karnataka"
+
+
+class AddEventRequest(BaseModel):
+    incident_id: str
+    event_type:  str
+    description: Optional[str] = None
+    metadata:    Optional[dict] = None
+    timestamp:   Optional[str]  = None
+
+
+class CreateAlertRequest(BaseModel):
+    user_id:        str
+    sos_event_id:   Optional[str]  = None
+    incident_id:    Optional[str]  = None
+    patient_name:   Optional[str]  = None
+    severity:       Optional[str]  = "P2"
+    latitude:       float
+    longitude:      float
+    contacts:       List[dict]     # [{name, phone, relation}]
+
+
+class LocationUpdateRequest(BaseModel):
+    session_id:  str
+    latitude:    float
+    longitude:   float
+
+
+class UpdateStatusRequest(BaseModel):
+    hospital_name:  Optional[str] = None
+    ambulance_name: Optional[str] = None
+    severity:       Optional[str] = None
+
+
+# ── Offline SOS Schemas ────────────────────────────────────────
+
+class Coords(BaseModel):
+    lat: float
+    lng: float
+
+
+class SOSMedicalProfile(BaseModel):
+    name:       Optional[str]       = "Unknown"
+    bloodType:  Optional[str]       = "Unknown"
+    allergies:  Optional[List[str]] = []
+    conditions: Optional[List[str]] = []
+    userId:     Optional[str]       = "anonymous"
+
+
+class EmergencyContact(BaseModel):
+    name:     str
+    phone:    str
+    relation: Optional[str] = ""
+
+
+class SOSTriggerRequest(BaseModel):
+    eventId:   str
+    profile:   SOSMedicalProfile
+    contacts:  List[EmergencyContact]
+    coords:    Coords
+    timestamp: str
+
+
+class SOSSyncRequest(BaseModel):
+    events: List[SOSTriggerRequest]
+
+
+class SOSResponse(BaseModel):
+    success: bool
+    eventId: str
+    sent:    int
+    failed:  int
+    message: str
+
+
+# ── Crash Auto-Detection Schemas ────────────────────────────────
+
+class CrashAnalyseRequest(BaseModel):
+    eventId:            str
+    userId:             Optional[str]   = "anonymous"
+    latitude:           Optional[float] = 0.0
+    longitude:          Optional[float] = 0.0
+    timestamp:          str
+    peak_acceleration:  float
+    delta_v:            float
+    jerk:               float
+    rotation_rate:      float
+    impact_duration_ms: float
+    pre_event_accel:    float
+
+
+class ManualCrashRequest(BaseModel):
+    eventId:         str
+    userId:          Optional[str]   = "anonymous"
+    latitude:        Optional[float] = 0.0
+    longitude:       Optional[float] = 0.0
+    timestamp:       str
+    vehicle_speed:   float
+    airbag_deployed: bool
+    can_move:        bool
+
+
+class CrashSOSUpdate(BaseModel):
+    eventId:       str
+    sos_triggered: bool
+    cancelled:     bool
+
+

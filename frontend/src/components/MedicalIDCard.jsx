@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
 export default function MedicalIDCard() {
   const [profile, setProfile] = useState(null);
   const navigate = useNavigate();
@@ -13,7 +15,7 @@ export default function MedicalIDCard() {
     // 2. Fetch fresh from FastAPI in background
     const token = localStorage.getItem('authToken');
     if (!token) return;
-    fetch('/api/medical-profile', {
+    fetch(`${API_BASE}/api/medical-profile`, {
       headers: { Authorization: `Bearer ${token}` }
     })
       .then(r => r.ok ? r.json() : null)

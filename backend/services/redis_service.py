@@ -90,3 +90,35 @@ async def set_cached(key: str, value, ttl: int = 60):
         _memory_cache.pop(key, None)
     else:
         _memory_cache[key] = (value, time.time() + ttl)
+
+
+async def get_bed_counts_cached(hospital_id: str, db_fallback):
+    """
+    Get bed counts from Cache. Falls back to DB if not cached.
+    Bed counts cached for 60 seconds.
+    """
+    key = f"beds:{hospital_id}"
+    cached = await get_cached(key)
+    if cached:
+        return json.loads(cached)
+
+    # Fallback to DB
+    from models.hospital_model import Hospital
+    from sqlalchemy.future import select
+
+    stmt = select(Hospital).filter(Hospital.id == hospital_id)
+    result = await db_fallback.execute(stmt)
+    hospital = result.scalar_one_or_none()
+
+    if not hospital:
+        return None
+
+    data = {
+        "trauma_beds":  hospital.trauma_beds_available,
+        "icu_beds":     hospital.icu_beds_available,
+        "general_beds": hospital.general_beds_available,
+        "blood_types":  hospital.blood_types_available,
+    }
+    await set_cached(key, json.dumps(data), ttl=60)
+    return data
+

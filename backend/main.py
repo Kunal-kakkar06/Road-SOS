@@ -6,7 +6,7 @@ from contextlib import asynccontextmanager
 from database import engine, Base
 from dotenv import load_dotenv
 
-from routers import ambulance, dispatch, medical_profile, digilocker, voice_guidance, anti_gravity, hospitals
+from routers import ambulance, dispatch, medical_profile, digilocker, voice_guidance, anti_gravity, hospitals, incident, family, triage, sos, crash, prevention
 from fastapi.staticfiles import StaticFiles
 
 load_dotenv()
@@ -17,7 +17,32 @@ async def lifespan(app: FastAPI):
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     print("Database tables created/ensured on startup.")
+
+    # Ensure demo incident exists in database for clean editing audits
+    from database import AsyncSessionLocal
+    from models import Incident
+    from sqlalchemy import select
+    async with AsyncSessionLocal() as session:
+        result = await session.execute(select(Incident).filter(Incident.incident_id == "demo-incident-uuid"))
+        exists = result.scalars().first()
+        if not exists:
+            demo_record = Incident(
+                incident_id="demo-incident-uuid",
+                user_id="anonymous",
+                fir_state="Karnataka",
+                severity="P2",
+                address=None,
+                latitude=12.9716,
+                longitude=77.5946,
+                speed_at_impact=None,
+                ambulance_name=None,
+                hospital_name=None
+            )
+            session.add(demo_record)
+            await session.commit()
+            print("Seeded blank demo-incident-uuid successfully.")
     yield
+
 
 app = FastAPI(
     title="RoadSOS Emergency Backend API",
@@ -59,6 +84,12 @@ app.include_router(digilocker.router)
 app.include_router(voice_guidance.router)
 app.include_router(anti_gravity.router)
 app.include_router(hospitals.router)
+app.include_router(incident.router)
+app.include_router(family.router)
+app.include_router(triage.router)
+app.include_router(sos.router)
+app.include_router(crash.router)
+app.include_router(prevention.router)
 
 @app.get("/")
 def read_root():

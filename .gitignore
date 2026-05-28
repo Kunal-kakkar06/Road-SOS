@@ -28,3 +28,14 @@ desktop.ini
 *.njsproj
 *.sln
 *.sw?
+
+# Node dependencies and build files
+node_modules/
+frontend/node_modules/
+dist/
+frontend/dist/
+
+# Local databases and caches
+*.db
+backend/roadsos.db
+.cache/

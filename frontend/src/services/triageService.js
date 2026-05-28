@@ -1,5 +1,7 @@
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
 export async function submitTriage(data) {
-  const response = await fetch('/api/triage', {
+  const response = await fetch(`${API_BASE}/api/triage`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -17,7 +19,7 @@ export async function uploadTriageImage(file) {
   if (file) {
     formData.append('file', file);
   }
-  const response = await fetch('/api/triage/image', {
+  const response = await fetch(`${API_BASE}/api/triage/image`, {
     method: 'POST',
     body: formData,
   });
@@ -32,7 +34,7 @@ export async function uploadTriageVoice(file) {
   if (file) {
     formData.append('file', file);
   }
-  const response = await fetch('/api/triage/voice', {
+  const response = await fetch(`${API_BASE}/api/triage/voice`, {
     method: 'POST',
     body: formData,
   });

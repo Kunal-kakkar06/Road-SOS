@@ -1,11 +1,66 @@
-import { useState } from 'react';
-import { NavLink, Outlet } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import useNetworkStatus from '../hooks/useNetworkStatus';
 import AntiGravity from './AntiGravity';
+import {
+  startCrashMonitoring, stopCrashMonitoring,
+  requestMotionPermission, isSensorAvailable,
+} from '../services/crashDetection';
+import CrashAlert        from './CrashAlert';
+import ManualCrashReport from './ManualCrashReport';
 
 export default function AppLayout() {
   const isOnline = useNetworkStatus();
   const [showAntiGravity, setShowAntiGravity] = useState(false);
+  const location = useLocation();
+  const [initials, setInitials] = useState('AK');
+
+  // Crash detection states
+  const [crash,      setCrash]      = useState(null);
+  const [showManual, setShowManual] = useState(false);
+  const [sensorOn,   setSensorOn]   = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      const granted = await requestMotionPermission();
+      if (granted) {
+        const ok = startCrashMonitoring((c) => setCrash(c));
+        setSensorOn(ok);
+      }
+    })();
+    return () => stopCrashMonitoring();
+  }, []);
+
+  useEffect(() => {
+    const updateInitials = () => {
+      try {
+        const cached = localStorage.getItem('medicalProfile');
+        if (cached) {
+          const profile = JSON.parse(cached);
+          if (profile && profile.full_name) {
+            const names = profile.full_name.trim().split(/\s+/);
+            if (names.length > 1) {
+              setInitials((names[0][0] + names[1][0]).toUpperCase());
+            } else if (names[0]) {
+              setInitials(names[0].substring(0, 2).toUpperCase());
+            }
+            return;
+          }
+        }
+      } catch (_) {}
+      setInitials('AK');
+    };
+
+    updateInitials();
+    window.addEventListener('storage', updateInitials);
+    // Trigger custom events inside the same tab if needed
+    window.addEventListener('profileUpdated', updateInitials);
+    
+    return () => {
+      window.removeEventListener('storage', updateInitials);
+      window.removeEventListener('profileUpdated', updateInitials);
+    };
+  }, [location.pathname]);
 
   return (
     <div className="app-shell">
@@ -15,7 +70,8 @@ export default function AppLayout() {
           <NavLink to="/" className="dash-wordmark">RoadSOS</NavLink>
           <nav className="dash-nav-desktop">
             <NavLink to="/map" className="dash-nav-link">Live Map</NavLink>
-            <NavLink to="/history" className="dash-nav-link">Incident History</NavLink>
+            <NavLink to="/prevention" className="dash-nav-link">Prevention</NavLink>
+            <NavLink to="/history" className="dash-nav-link">History</NavLink>
             <NavLink to="/medical-profile" className="dash-nav-link">Medical ID</NavLink>
           </nav>
           <button 
@@ -26,8 +82,20 @@ export default function AppLayout() {
             <span className="material-symbols-outlined" style={{fontSize:24, color:'#fca311'}}>paragliding</span>
             <span style={{fontFamily:'Space Grotesk,sans-serif', fontWeight:700, color:'#fff'}}>Anti-Gravity</span>
           </button>
+          <div style={{
+            fontSize:11,fontWeight:600,
+            color: sensorOn ? '#27AE60' : '#ba1a1a',
+            fontFamily:'Inter,sans-serif',
+            marginRight: 12,
+            background: sensorOn ? 'rgba(39,174,96,0.1)' : 'rgba(186,26,26,0.1)',
+            padding: '4px 10px',
+            borderRadius: 12,
+            letterSpacing: '0.3px'
+          }}>
+            {sensorOn ? '● Crash Sensor Active' : '○ Manual Only'}
+          </div>
           <div className="dash-avatar">
-            <span>AK</span>
+            <span>{initials}</span>
           </div>
         </div>
       </header>
@@ -72,6 +140,31 @@ export default function AppLayout() {
           <span className="nav-label">Profile</span>
         </NavLink>
       </nav>
+
+      {/* Manual report button — floating above mobile tabbar */}
+      <button onClick={() => setShowManual(true)} style={{
+        position:'fixed',bottom:80,right:20,zIndex:999,
+        background:'#ba1a1a',color:'#fff',
+        padding:'10px 16px',borderRadius:10,border:'none',
+        fontSize:13,fontWeight:700,cursor:'pointer',
+        fontFamily:'Space Grotesk,sans-serif',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+        display: 'flex', alignItems: 'center', gap: 6
+      }}>
+        <span className="material-symbols-outlined" style={{fontSize:18}}>warning</span>
+        Report Crash
+      </button>
+
+      {showManual && (
+        <ManualCrashReport
+          onResult={(r) => { setShowManual(false); if(r.isCrash) setCrash(r); }}
+          onCancel={() => setShowManual(false)}
+        />
+      )}
+
+      {crash && (
+        <CrashAlert crash={crash} onDismiss={() => setCrash(null)} />
+      )}
     </div>
   );
 }

@@ -1,195 +1,360 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
-from sqlalchemy.orm import selectinload
-from database import get_db
-import models
-from services.geo import haversine
-from pydantic import BaseModel, Field
-from typing import List, Optional
-from sqlalchemy.sql import func
+from sqlalchemy import select
+from pydantic import BaseModel
+from typing import Optional, List
+from datetime import datetime
+import asyncio, json, uuid, math
 
-router = APIRouter(prefix="/api/ambulance", tags=["ambulance"])
+from database import get_db
+from models.ambulance_provider import AmbulanceProvider
+from models.dispatch_event import DispatchEvent
+from services.maps_service import get_eta_and_distance
+from services.ambulance_sms import send_dispatch_sms
+from services.redis_service import get_cached, set_cached
+
+router = APIRouter(prefix="/api/ambulance", tags=["Ambulance"])
+
+
+# ── Geospatial Haversine Fallback ────────────────────────────
+
+def haversine_distance(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
+    """Calculates physical distance in kilometers using the Haversine mathematical equation."""
+    R = 6371.0 # Earth radius in km
+    dlat = math.radians(lat2 - lat1)
+    dlng = math.radians(lng2 - lng1)
+    a = math.sin(dlat/2)**2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlng/2)**2
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
+    return R * c
+
+
+# ── Pydantic Schemas ──────────────────────────────────────────
+
+class DispatchRequest(BaseModel):
+    patient_lat:     float
+    patient_lng:     float
+    patient_user_id: Optional[str] = "anonymous"
+    sos_event_id:    Optional[str]   = None
+    severity:        Optional[str]   = "P2"
+    blood_type:      Optional[str]   = None
+
 
 class LocationUpdate(BaseModel):
-    lat: float
-    lng: float
+    provider_id: str
+    lat:         float
+    lng:         float
 
-class AmbulanceRequest(BaseModel):
-    lat: float
-    lng: float
-    address: str
-    patient_name: str
-    patient_phone: str
-    severity: int = Field(..., ge=1, le=5)
 
-@router.post("/request")
-async def request_ambulance(payload: AmbulanceRequest, db: AsyncSession = Depends(get_db)):
-    # 1. Save new dispatch_request with status=pending
-    dispatch = models.DispatchRequest(
-        incident_lat=payload.lat,
-        incident_lng=payload.lng,
-        incident_address=payload.address,
-        status="pending",
-        patient_name=payload.patient_name,
-        patient_phone=payload.patient_phone,
-        severity=payload.severity
-    )
-    db.add(dispatch)
-    await db.flush()  # Generate dispatch.id
+class StatusUpdate(BaseModel):
+    status: str   # en_route / arrived / completed / cancelled
 
-    # Create initial audit log
-    audit_init = models.AuditLog(
-        request_id=dispatch.id,
-        event_type="request_created",
-        details=f"Emergency request submitted by {payload.patient_name} for location '{payload.address}' (severity level {payload.severity})."
-    )
-    db.add(audit_init)
 
-    # 2. Find 5 nearest verified+available ambulances using Haversine formula in Python (no PostGIS)
-    # Join ambulances and providers where provider is verified and ambulance is available
-    query = (
-        select(models.Ambulance)
-        .join(models.Provider)
-        .where(
-            models.Ambulance.is_available == True,
-            models.Provider.is_verified == True
+# ── POST /api/ambulance/nearest ──────────────────────────────
+@router.post("/nearest")
+async def find_nearest(
+    lat:      float = Query(...),
+    lng:      float = Query(...),
+    type:     Optional[str] = Query(None),
+    db:       AsyncSession = Depends(get_db),
+):
+    # Sanitize client coordinates if they are outside of Bengaluru to prevent extreme distances/ETAs
+    if haversine_distance(lat, lng, 12.9716, 77.5946) > 100.0:
+        lat, lng = 12.9716, 77.5946
+
+    cache_key = f"ambulance_nearest:{round(lat,3)}:{round(lng,3)}:{type}"
+    cached = await get_cached(cache_key)
+    if cached:
+        return json.loads(cached)
+
+    # 1. Fetch available verified providers
+    result = await db.execute(select(AmbulanceProvider).filter(
+        AmbulanceProvider.is_verified == True,
+        AmbulanceProvider.is_available == True,
+        AmbulanceProvider.is_active == True
+    ))
+    providers_raw = result.scalars().all()
+
+    # 2. Filter by type
+    if type:
+        providers_raw = [p for p in providers_raw if p.type == type]
+
+    # 3. Calculate Haversine distances
+    providers = []
+    for row in providers_raw:
+        dist_km = haversine_distance(lat, lng, row.latitude, row.longitude)
+        
+        # Relaxed bounds filter for sandbox demo compatibility
+        if dist_km > 100000.0:
+            continue
+
+        eta_data = await get_eta_and_distance(
+            origin_lat=lat, origin_lng=lng,
+            dest_lat=row.latitude, dest_lng=row.longitude,
         )
-        .options(selectinload(models.Ambulance.provider))
+
+        providers.append({
+            "id":            str(row.id),
+            "name":          row.name,
+            "operator_name": row.operator_name,
+            "phone":         row.phone,
+            "vehicle_number":row.vehicle_number,
+            "type":          row.type,
+            "distance_km":   round(dist_km, 1),
+            "eta_minutes":   eta_data.get("duration_minutes") or max(3, round(dist_km * 2.0)),
+            "eta_text":      eta_data.get("duration_text") or f"{max(3, round(dist_km * 2.0))} mins",
+            "is_verified":   row.is_verified,
+            "lat":           row.latitude,
+            "lng":           row.longitude,
+        })
+
+    # Sort nearest
+    providers.sort(key=lambda x: x["distance_km"])
+    providers = providers[:5]
+
+    response = {"providers": providers}
+    await set_cached(cache_key, json.dumps(response), ttl=30)
+    return response
+
+
+# ── POST /api/ambulance/dispatch ──────────────────────────────
+@router.post("/dispatch")
+async def dispatch_ambulance(
+    payload: DispatchRequest,
+    db:      AsyncSession = Depends(get_db),
+):
+    # Sanitize client coordinates if they are outside of Bengaluru to prevent extreme distances/ETAs
+    if haversine_distance(payload.patient_lat, payload.patient_lng, 12.9716, 77.5946) > 100.0:
+        payload.patient_lat = 12.9716
+        payload.patient_lng = 77.5946
+
+    # 1. Find nearest verified unit
+    result = await db.execute(select(AmbulanceProvider).filter(
+        AmbulanceProvider.is_verified == True,
+        AmbulanceProvider.is_available == True,
+        AmbulanceProvider.is_active == True
+    ))
+    providers_raw = result.scalars().all()
+
+    if not providers_raw:
+        raise HTTPException(status_code=404, detail="No ambulance available")
+
+    # Compute distances
+    candidates = []
+    for p in providers_raw:
+        dist = haversine_distance(payload.patient_lat, payload.patient_lng, p.latitude, p.longitude)
+        if dist <= 100000.0:
+            candidates.append((dist, p))
+
+    if not candidates:
+        raise HTTPException(status_code=404, detail="No ambulance available")
+
+    candidates.sort(key=lambda x: x[0])
+    nearest_dist, provider = candidates[0]
+
+
+    # 2. Get ETA from Google Maps
+    eta_data = await get_eta_and_distance(
+        origin_lat=provider.latitude,
+        origin_lng=provider.longitude,
+        dest_lat=payload.patient_lat,
+        dest_lng=payload.patient_lng,
     )
-    result = await db.execute(query)
-    ambulances = result.scalars().all()
 
-    # Calculate distance for each
-    ambulance_distances = []
-    for amb in ambulances:
-        dist = haversine(payload.lat, payload.lng, amb.current_lat, amb.current_lng)
-        ambulance_distances.append((amb, dist))
-
-    # Sort by distance
-    ambulance_distances.sort(key=lambda x: x[1])
-
-    # Take top 5 nearest
-    nearest_5 = ambulance_distances[:5]
-
-    if not nearest_5:
-        # Commit the request as pending with no ambulance assigned
-        await db.commit()
-        return {
-            "dispatch_request_id": dispatch.id,
-            "status": dispatch.status,
-            "message": "No available and verified ambulances found in the region.",
-            "assigned_ambulance": None,
-            "eta_minutes": None
-        }
-
-    # 3. Sort by distance, assign the closest one
-    closest_amb, closest_dist = nearest_5[0]
-
-    # 4. Set ambulance is_available=False
-    closest_amb.is_available = False
-
-    # 5. Update request status=assigned
-    dispatch.assigned_ambulance_id = closest_amb.id
-    dispatch.status = "assigned"
-    dispatch.assigned_at = func.now()
-
-    # Create assignment audit log
-    audit_assign = models.AuditLog(
-        request_id=dispatch.id,
-        event_type="ambulance_assigned",
-        details=f"Ambulance {closest_amb.vehicle_number} (Driver: {closest_amb.driver_name}) from provider '{closest_amb.provider.name}' assigned. Distance: {closest_dist:.2f} km."
+    # 3. Create dispatch event
+    dispatch_id = str(uuid.uuid4())
+    event = DispatchEvent(
+        dispatch_id      = dispatch_id,
+        sos_event_id     = payload.sos_event_id,
+        provider_id      = str(provider.id),
+        patient_lat      = payload.patient_lat,
+        patient_lng      = payload.patient_lng,
+        patient_user_id  = payload.patient_user_id,
+        eta_minutes      = eta_data.get("duration_minutes") or max(3, round(nearest_dist * 2.0)),
+        distance_km      = eta_data.get("distance_km") or round(nearest_dist, 1),
+        route_url        = eta_data.get("route_url"),
+        status           = "dispatched",
     )
-    db.add(audit_assign)
+    db.add(event)
 
+    # 4. Mark provider as unavailable
+    provider.is_available = False
     await db.commit()
-    await db.refresh(dispatch)
-    await db.refresh(closest_amb)
 
-    # 6. Return ambulance details + ETA estimate
-    # Simple ETA estimation: 1.5 mins per km + 3 mins base delay
-    eta_est = round(closest_dist * 1.5 + 3.0, 1)
+    # 5. Send SMS to driver
+    sms_sent = await send_dispatch_sms(
+        driver_phone     = provider.phone,
+        driver_name      = provider.operator_name,
+        patient_lat      = payload.patient_lat,
+        patient_lng      = payload.patient_lng,
+        eta_minutes      = event.eta_minutes,
+        dispatch_id      = dispatch_id,
+    )
+
+    # Update SMS sent status
+    event.driver_sms_sent = sms_sent
+    await db.commit()
 
     return {
-        "dispatch_request_id": dispatch.id,
-        "status": dispatch.status,
-        "assigned_ambulance": {
-            "id": closest_amb.id,
-            "vehicle_number": closest_amb.vehicle_number,
-            "driver_name": closest_amb.driver_name,
-            "driver_phone": closest_amb.driver_phone,
-            "provider_name": closest_amb.provider.name,
-            "current_lat": closest_amb.current_lat,
-            "current_lng": closest_amb.current_lng,
-            "distance_km": round(closest_dist, 2)
-        },
-        "eta_minutes": eta_est
+        "dispatch_id":    dispatch_id,
+        "provider_id":    str(provider.id),
+        "provider_name":  provider.name,
+        "operator_name":  provider.operator_name,
+        "driver_phone":   provider.phone,
+        "vehicle_number": provider.vehicle_number,
+        "type":           provider.type,
+        "eta_minutes":    event.eta_minutes,
+        "eta_text":       f"{event.eta_minutes} mins",
+        "distance_km":    event.distance_km,
+        "route_url":      event.route_url,
+        "driver_sms_sent":sms_sent,
+        "status":         "dispatched",
     }
 
-@router.get("/nearby")
-async def get_nearby_ambulances(
-    lat: float = Query(...),
-    lng: float = Query(...),
-    radius_km: float = Query(10.0),
-    db: AsyncSession = Depends(get_db)
-):
-    # Find verified + available ambulances within radius
-    query = (
-        select(models.Ambulance)
-        .join(models.Provider)
-        .where(
-            models.Ambulance.is_available == True,
-            models.Provider.is_verified == True
-        )
-        .options(selectinload(models.Ambulance.provider))
-    )
-    result = await db.execute(query)
-    ambulances = result.scalars().all()
 
-    nearby_list = []
-    for amb in ambulances:
-        dist = haversine(lat, lng, amb.current_lat, amb.current_lng)
-        if dist <= radius_km:
-            nearby_list.append({
-                "id": amb.id,
-                "provider_id": amb.provider_id,
-                "provider_name": amb.provider.name,
-                "vehicle_number": amb.vehicle_number,
-                "driver_name": amb.driver_name,
-                "driver_phone": amb.driver_phone,
-                "current_lat": amb.current_lat,
-                "current_lng": amb.current_lng,
-                "last_ping": amb.last_ping,
-                "distance_km": round(dist, 2)
-            })
-
-    nearby_list.sort(key=lambda x: x["distance_km"])
-    return nearby_list
-
-@router.patch("/{id}/location")
-async def update_location(
-    id: int,
+# ── POST /api/ambulance/location ─────────────────────────────
+@router.post("/location")
+async def update_driver_location(
     payload: LocationUpdate,
-    db: AsyncSession = Depends(get_db)
+    db:      AsyncSession = Depends(get_db),
 ):
-    query = select(models.Ambulance).where(models.Ambulance.id == id)
-    result = await db.execute(query)
-    ambulance = result.scalar_one_or_none()
+    result = await db.execute(select(AmbulanceProvider).filter(AmbulanceProvider.id == payload.provider_id))
+    provider = result.scalars().first()
+    if not provider:
+        raise HTTPException(404, "Provider not found")
 
-    if not ambulance:
-        raise HTTPException(status_code=404, detail="Ambulance not found")
-
-    ambulance.current_lat = payload.lat
-    ambulance.current_lng = payload.lng
-    ambulance.last_ping = func.now()
-
+    provider.latitude         = payload.lat
+    provider.longitude        = payload.lng
+    provider.location_updated = datetime.utcnow()
     await db.commit()
-    await db.refresh(ambulance)
+
+    # Cache latest position for SSE stream
+    await set_cached(
+        f"driver_location:{payload.provider_id}",
+        json.dumps({"lat": payload.lat, "lng": payload.lng,
+                    "ts": datetime.utcnow().isoformat()}),
+        ttl=30,
+    )
+    return {"updated": True}
+
+
+# ── PATCH /api/ambulance/dispatch/{id}/status ─────────────────
+@router.patch("/dispatch/{dispatch_id}/status")
+async def update_dispatch_status(
+    dispatch_id: str,
+    payload:     StatusUpdate,
+    db:          AsyncSession = Depends(get_db),
+):
+    result = await db.execute(select(DispatchEvent).filter(DispatchEvent.dispatch_id == dispatch_id))
+    event = result.scalars().first()
+    if not event:
+        raise HTTPException(404, "Dispatch not found")
+
+    event.status = payload.status
+    if payload.status == "arrived":
+        event.arrived_at = datetime.utcnow()
+    elif payload.status in ["completed", "cancelled"]:
+        event.completed_at = datetime.utcnow()
+        # Free up the ambulance
+        res_provider = await db.execute(select(AmbulanceProvider).filter(AmbulanceProvider.id == event.provider_id))
+        provider = res_provider.scalars().first()
+        if provider:
+            provider.is_available = True
+    await db.commit()
+    return {"dispatch_id": dispatch_id, "status": payload.status}
+
+
+# ── GET /api/ambulance/dispatch/{id} ─────────────────────────
+@router.get("/dispatch/{dispatch_id}")
+async def get_dispatch(dispatch_id: str, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(DispatchEvent).filter(DispatchEvent.dispatch_id == dispatch_id))
+    event = result.scalars().first()
+    if not event:
+        raise HTTPException(404, "Dispatch not found")
+
+    loc_cached = await get_cached(f"driver_location:{event.provider_id}")
+    driver_location = json.loads(loc_cached) if loc_cached else None
 
     return {
-        "id": ambulance.id,
-        "vehicle_number": ambulance.vehicle_number,
-        "current_lat": ambulance.current_lat,
-        "current_lng": ambulance.current_lng,
-        "last_ping": ambulance.last_ping
+        "dispatch_id":    event.dispatch_id,
+        "provider_id":    event.provider_id,
+        "status":         event.status,
+        "eta_minutes":    event.eta_minutes,
+        "distance_km":    event.distance_km,
+        "route_url":      event.route_url,
+        "driver_location":driver_location,
+        "dispatched_at":  str(event.dispatched_at),
+        "arrived_at":     str(event.arrived_at) if event.arrived_at else None,
     }
+
+
+# ── GET /api/ambulance/providers ─────────────────────────────
+@router.get("/providers")
+async def list_providers(db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(AmbulanceProvider).filter(AmbulanceProvider.is_verified == True))
+    providers = result.scalars().all()
+    return [
+        {
+            "id": str(p.id), "name": p.name, "type": p.type,
+            "lat": p.latitude, "lng": p.longitude,
+            "is_available": p.is_available,
+            "vehicle_number": p.vehicle_number,
+        }
+        for p in providers
+    ]
+
+
+# ── GET /api/ambulance/track/{dispatch_id} (SSE) ──────────────
+@router.get("/track/{dispatch_id}")
+async def track_ambulance(dispatch_id: str, db: AsyncSession = Depends(get_db)):
+    """
+    SSE tracking stream. Driver updates positions dynamically, 
+    and this pushes coordinates to patient client every 5s.
+    """
+    result = await db.execute(select(DispatchEvent).filter(DispatchEvent.dispatch_id == dispatch_id))
+    event = result.scalars().first()
+    if not event:
+        return {"error": "Dispatch not found"}
+
+    provider_id = event.provider_id
+
+    async def location_stream():
+        last_location = None
+        while True:
+            cached = await get_cached(f"driver_location:{provider_id}")
+
+            if cached:
+                location = json.loads(cached)
+                if location != last_location:
+                    last_location = location
+
+                    # Fresh query to monitor dispatch status changes
+                    res_dispatch = await db.execute(select(DispatchEvent).filter(DispatchEvent.dispatch_id == dispatch_id))
+                    dispatch = res_dispatch.scalars().first()
+
+                    payload = {
+                        "dispatch_id": dispatch_id,
+                        "driver_lat":  location["lat"],
+                        "driver_lng":  location["lng"],
+                        "timestamp":   location["ts"],
+                        "status":      dispatch.status if dispatch else "unknown",
+                    }
+                    yield f"data: {json.dumps(payload)}\n\n"
+
+            res_dispatch = await db.execute(select(DispatchEvent).filter(DispatchEvent.dispatch_id == dispatch_id))
+            dispatch = res_dispatch.scalars().first()
+            if dispatch and dispatch.status in ["completed", "cancelled"]:
+                yield f"data: {json.dumps({'status': dispatch.status, 'done': True})}\n\n"
+                break
+
+            await asyncio.sleep(5)
+
+    return StreamingResponse(
+        location_stream(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control":               "no-cache",
+            "X-Accel-Buffering":           "no",
+            "Access-Control-Allow-Origin": "*",
+        },
+    )

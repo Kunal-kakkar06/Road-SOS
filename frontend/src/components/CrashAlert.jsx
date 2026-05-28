@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { triggerSOS } from '../services/offlineSOS';
 
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
 const SEV = {
   P1: { bg:'#ba1a1a', text:'#fff',    badge:'CRITICAL' },
   P2: { bg:'#fca311', text:'#663f00', badge:'SERIOUS'  },
@@ -21,12 +23,7 @@ export default function CrashAlert({ crash, onDismiss }) {
     timer.current = setInterval(() => {
       c--;
       setCount(c);
-      if (c <= 0) {
-        clearInterval(timer.current);
-        // Countdown ended — do NOT auto-fire
-        // User must tap "Send SOS" or "I'm OK" explicitly
-        setCount('!');
-      }
+      if (c <= 0) { clearInterval(timer.current); fire(); }
     }, 1000);
     return () => clearInterval(timer.current);
   }, []);
@@ -34,6 +31,19 @@ export default function CrashAlert({ crash, onDismiss }) {
   const fire = async () => {
     setPhase('firing');
     patch(true, false);
+    // Persist crash data for FIR auto-fill
+    localStorage.setItem('lastCrashReport', JSON.stringify({
+      eventId:           crash.eventId,
+      severity:          crash.severity,
+      severity_label:    crash.severity_label,
+      crash_probability: crash.crash_probability,
+      vehicle_speed:     crash.vehicle_speed  || null,
+      airbag_deployed:   crash.airbag_deployed ?? null,
+      can_move:          crash.can_move        ?? null,
+      latitude:          crash.latitude        || null,
+      longitude:         crash.longitude       || null,
+      timestamp:         new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
+    }));
     const r = await triggerSOS();
     setSOSResult(r);
     setPhase('done');
@@ -45,7 +55,7 @@ export default function CrashAlert({ crash, onDismiss }) {
     setPhase('cancelled');
   };
 
-  const patch = (sos, can) => fetch('/api/crash/sos-status', {
+  const patch = (sos, can) => fetch(`${API_BASE}/api/crash/sos-status`, {
     method:'PATCH', headers:{'Content-Type':'application/json'},
     body: JSON.stringify({eventId:crash.eventId, sos_triggered:sos, cancelled:can}),
   }).catch(()=>{});
@@ -112,22 +122,10 @@ export default function CrashAlert({ crash, onDismiss }) {
         <div style={{width:96,height:96,borderRadius:'50%',background:s.bg,
                      display:'flex',flexDirection:'column',
                      alignItems:'center',justifyContent:'center'}}>
-          <span style={{
-            fontSize: count === '!' ? 44 : 38,
-            fontWeight:700, color:s.text, lineHeight:1,
-            animation: count === '!' ? 'pulse 1s infinite' : 'none',
-          }}>
-            {count}
-          </span>
-          {typeof count === 'number' && (
-            <span style={{fontSize:10,color:s.text,opacity:.8}}>seconds</span>
-          )}
+          <span style={{fontSize:38,fontWeight:700,color:s.text,lineHeight:1}}>{count}</span>
+          <span style={{fontSize:10,color:s.text,opacity:.8}}>seconds</span>
         </div>
-        <p style={{fontSize:13,color:'#534433'}}>
-          {typeof count === 'number' && count > 0
-            ? `Confirm or cancel within ${count}s`
-            : 'Tap below to send SOS or dismiss'}
-        </p>
+        <p style={{fontSize:13,color:'#534433'}}>SOS fires automatically in {count}s</p>
         <div style={{display:'flex',gap:10,width:'100%'}}>
           <button onClick={cancel} style={secBtn}>I'm OK — Cancel</button>
           <button onClick={fire} style={{...secBtn,background:s.bg,color:s.text}}>Send SOS now</button>

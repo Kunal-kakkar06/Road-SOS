@@ -62,7 +62,7 @@ a { text-decoration: none; color: inherit; }
 .dash-header {
   position: sticky;
   top: 0;
-  z-index: 50;
+  z-index: 10000;
   background: #fff8f4;
   border-bottom: 2px solid rgba(34, 26, 17, 0.1);
   height: 64px;

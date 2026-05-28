@@ -1,6 +1,10 @@
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
 export const startDigiLockerImport = async () => {
   const token = localStorage.getItem('authToken');
-  const res   = await fetch('/api/digilocker/auth-url', {
+  const redirectUri = `${window.location.origin}/digilocker/callback`;
+  const params = new URLSearchParams({ redirect_uri: redirectUri });
+  const res   = await fetch(`${API_BASE}/api/digilocker/auth-url?${params}`, {
     headers: { Authorization: `Bearer ${token}` }
   });
   const { auth_url } = await res.json();
@@ -11,7 +15,7 @@ export const startDigiLockerImport = async () => {
 // Called on /digilocker/callback page after redirect
 export const handleDigiLockerCallback = async (code) => {
   const token = localStorage.getItem('authToken');
-  const res   = await fetch('/api/digilocker/callback', {
+  const res   = await fetch(`${API_BASE}/api/digilocker/callback`, {
     method:  'POST',
     headers: {
       'Content-Type':  'application/json',

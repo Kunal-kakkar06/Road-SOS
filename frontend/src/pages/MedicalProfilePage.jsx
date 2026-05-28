@@ -1,10 +1,14 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { startDigiLockerImport } from '../services/digilockerService';
 
 const BLOOD_TYPES = ['A+','A-','B+','B-','AB+','AB-','O+','O-'];
 const GENDERS     = ['Male','Female','Non-binary','Prefer not to say'];
 
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
 export default function MedicalProfilePage() {
+  const navigate = useNavigate();
   const [profile, setProfile] = useState({
     full_name:'', date_of_birth:'', gender:'', phone:'',
     blood_type:'', allergies:[], medications:[], conditions:[],
@@ -20,11 +24,17 @@ export default function MedicalProfilePage() {
 
   // Load existing profile on mount
   useEffect(() => {
+    // Check local fallback first
+    const cached = localStorage.getItem('medicalProfile');
+    if (cached) {
+      setProfile(JSON.parse(cached));
+    }
+
     const fetch_profile = async () => {
       const token = localStorage.getItem('authToken');
       if (!token) { setLoading(false); return; }
       try {
-        const res = await fetch('/api/medical-profile', {
+        const res = await fetch(`${API_BASE}/api/medical-profile`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (res.ok) {
@@ -37,13 +47,29 @@ export default function MedicalProfilePage() {
       setLoading(false);
     };
     fetch_profile();
+    // If we loaded local cache, disable long loading flash
+    if (cached) setLoading(false);
   }, []);
 
   const save = async () => {
     setSaving(true);
+    
+    // Always store in localStorage immediately so the dashboard displays the changes instantly!
+    localStorage.setItem('medicalProfile', JSON.stringify(profile));
+    localStorage.setItem('emergencyContacts', JSON.stringify(profile.emergency_contacts || []));
+    window.dispatchEvent(new Event('profileUpdated'));
+    
     const token = localStorage.getItem('authToken');
+    if (!token) {
+      // Offline fallback: save locally directly
+      setSaved(true);
+      setSaving(false);
+      setTimeout(() => setSaved(false), 3000);
+      return;
+    }
+    
     try {
-      const res = await fetch('/api/medical-profile', {
+      const res = await fetch(`${API_BASE}/api/medical-profile`, {
         method:  'PUT',
         headers: {
           'Content-Type':  'application/json',
@@ -55,6 +81,8 @@ export default function MedicalProfilePage() {
         const data = await res.json();
         setProfile(data);
         localStorage.setItem('medicalProfile', JSON.stringify(data));
+        localStorage.setItem('emergencyContacts', JSON.stringify(data.emergency_contacts || []));
+        window.dispatchEvent(new Event('profileUpdated'));
         setSaved(true);
         setTimeout(() => setSaved(false), 3000);
       }
@@ -102,17 +130,28 @@ export default function MedicalProfilePage() {
     }}>
 
       {/* ── Page header ── */}
-      <div style={{marginBottom:24}}>
-        <h1 style={{
-          fontFamily:'Space Grotesk,sans-serif',
-          fontSize:24,fontWeight:700,color:'#14213D',marginBottom:4,
+      <div style={{marginBottom:24, display:'flex', justifyContent:'space-between', alignItems:'flex-start', flexWrap:'wrap', gap: 12}}>
+        <div>
+          <h1 style={{
+            fontFamily:'Space Grotesk,sans-serif',
+            fontSize:26,fontWeight:700,color:'#14213D',marginBottom:6,
+          }}>
+            Medical Profile
+          </h1>
+          <p style={{fontSize:14,color:'#334155',fontWeight:600}}>
+            This information is shared with paramedics during emergencies.
+            Keep it accurate and up to date.
+          </p>
+        </div>
+        <button onClick={() => navigate('/')} style={{
+          background:'#14213D', color:'#fff', border:'none', borderRadius:8,
+          padding:'10px 16px', fontSize:13, fontWeight:700, cursor:'pointer',
+          fontFamily:'Space Grotesk,sans-serif', display:'flex', alignItems:'center', gap:6,
+          boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
         }}>
-          Medical Profile
-        </h1>
-        <p style={{fontSize:14,color:'#534433'}}>
-          This information is shared with paramedics during emergencies.
-          Keep it accurate and up to date.
-        </p>
+          <span className="material-symbols-outlined" style={{fontSize:18}}>arrow_back</span>
+          Dashboard
+        </button>
       </div>
 
       {/* ── DigiLocker import banner ── */}
@@ -121,20 +160,22 @@ export default function MedicalProfilePage() {
         borderRadius:12,padding:'14px 18px',
         display:'flex',alignItems:'center',justifyContent:'space-between',
         marginBottom:16,flexWrap:'wrap',gap:10,
+        boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
       }}>
         <div>
-          <p style={{fontSize:13,fontWeight:600,color:'#14213D',marginBottom:2}}>
+          <p style={{fontSize:14,fontWeight:700,color:'#14213D',marginBottom:2}}>
             Import from DigiLocker / ABHA
           </p>
-          <p style={{fontSize:12,color:'#534433'}}>
+          <p style={{fontSize:13,color:'#475569',fontWeight:600}}>
             Auto-fill blood type, allergies and conditions from your health record
           </p>
         </div>
         <button onClick={startDigiLockerImport} style={{
           padding:'9px 18px',borderRadius:8,border:'none',
           background:'#006687',color:'#fff',
-          fontSize:13,fontWeight:600,cursor:'pointer',
+          fontSize:13,fontWeight:700,cursor:'pointer',
           fontFamily:'Space Grotesk,sans-serif',whiteSpace:'nowrap',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
         }}>
           Connect DigiLocker
         </button>

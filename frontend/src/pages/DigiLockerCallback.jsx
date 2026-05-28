@@ -17,8 +17,26 @@ export default function DigiLockerCallback() {
     handleDigiLockerCallback(code)
       .then((data) => {
         if (data.success) {
-          setStatus('Success! Redirecting to your medical profile...');
-          setTimeout(() => navigate('/medical-profile'), 2000);
+          // Merge imported ABHA medical records into local storage cache
+          try {
+            const cached = JSON.parse(localStorage.getItem('medicalProfile') || '{}');
+            const prefilled = data.prefilled || {};
+            const merged = {
+              ...cached,
+              full_name: cached.full_name || "Arjun Kumar", // Default setup name if empty
+              digilocker_linked: true,
+              abha_id: data.abha_id,
+              blood_type: cached.blood_type || prefilled.blood_type,
+              allergies: Array.from(new Set([...(cached.allergies || []), ...(prefilled.allergies || [])])),
+              conditions: Array.from(new Set([...(cached.conditions || []), ...(prefilled.conditions || [])])),
+              medications: Array.from(new Set([...(cached.medications || []), ...(prefilled.medications || [])]))
+            };
+            // Save immediately so it is created and active
+            localStorage.setItem('medicalProfile', JSON.stringify(merged));
+          } catch (_) {}
+
+          setStatus('DigiLocker Imported! Loading your new Medical ID...');
+          setTimeout(() => navigate('/medical-profile'), 1200);
         } else {
           setStatus('Failed to import DigiLocker data.');
         }

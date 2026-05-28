@@ -3,22 +3,55 @@
 <head>
 <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Hospital Routing — RoadSOS</title>
-<meta name="description" content="Find hospitals with trauma beds and get real-time routing"/>
+<meta name="description" content="Find nearest hospitals with trauma beds, live bed availability, and Google Maps routing"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0..1,0" rel="stylesheet"/>
 <link rel="stylesheet" href="css/shared.css"/>
 <style>
-.route-safe{background:#1dc4ff;height:5px;border-radius:2px}
-.route-caution{background:#fca311;height:5px;border-radius:2px}
-.route-risk{background:#ba1a1a;height:5px;border-radius:2px}
-.hosp-scroll{display:flex;gap:16px;overflow-x:auto;padding-bottom:8px}
-@media(min-width:768px){.hosp-scroll{display:grid;grid-template-columns:repeat(3,1fr);overflow-x:visible}}
-.hosp-card{min-width:280px;flex-shrink:0}
-@media(min-width:768px){.hosp-card{min-width:unset}}
-.bed-chip{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:9999px;font-size:11px;font-weight:600}
-.pre-alert{display:inline-flex;align-items:center;gap:4px;background:#D4EDDA;color:#0A4020;border-radius:9999px;font-size:11px;font-weight:600;padding:3px 8px}
-.h-pin{position:absolute;background:#fff;border:2px solid #14213D;border-radius:.5rem;padding:3px 8px;font-size:11px;font-weight:700;box-shadow:0 4px 0 rgba(0,0,0,.12)}
+.hosp-page{max-width:680px;margin:0 auto;padding:0 0 100px}
+.hosp-header{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.hosp-header h1{font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;margin:0}
+.hosp-sub{font-size:12px;color:#867461;margin:0 0 16px}
+.filter-row{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.filter-chip{padding:7px 16px;border-radius:24px;border:none;cursor:pointer;font-size:12px;font-weight:600;font-family:Inter,sans-serif;background:rgba(0,0,0,0.04);color:#534433;transition:all .2s;display:flex;align-items:center;gap:6px}
+.filter-chip.active{background:#14213D;color:#fff}
+.hosp-cards{display:flex;flex-direction:column;gap:14px}
+.hosp-card{background:#fff;border:1px solid rgba(0,0,0,0.08);border-radius:16px;padding:18px 20px;position:relative;overflow:hidden;transition:transform .15s}
+.hosp-card.rank1{border:2px solid #14213D;box-shadow:0 4px 24px rgba(20,33,61,0.1)}
+.hosp-card .best-badge{position:absolute;top:0;right:0;background:#14213D;color:#fca311;padding:4px 14px 4px 18px;border-radius:0 0 0 16px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;font-family:'Space Grotesk',sans-serif}
+.hosp-name-row{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px}
+.hosp-rank{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;font-family:'Space Grotesk',sans-serif;flex-shrink:0}
+.hosp-rank.r1{background:#14213D;color:#fca311}
+.hosp-rank.r2{background:#f0e0d1;color:#221a11}
+.hosp-rank.r3{background:#f0e0d1;color:#221a11}
+.hosp-name{font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;color:#14213D;margin:0}
+.hosp-type{font-size:12px;color:#867461;margin:2px 0 0}
+.eta-pill{background:#ffb95f;color:#2a1700;padding:6px 14px;border-radius:24px;font-size:13px;font-weight:700;white-space:nowrap;font-family:'Space Grotesk',sans-serif;flex-shrink:0}
+.beds-row{display:flex;gap:8px;margin-bottom:12px}
+.bed-box{flex:1;background:#f5f0eb;border-radius:10px;padding:8px 10px;text-align:center}
+.bed-label{font-size:10px;color:#867461;font-weight:600;text-transform:uppercase;letter-spacing:.03em;margin:0}
+.bed-count{font-size:20px;font-weight:800;font-family:'Space Grotesk',sans-serif;margin:2px 0;transition:color .3s}
+.bed-sub{font-size:9px;color:#a0aab2;text-transform:uppercase;letter-spacing:.05em;margin:0}
+.blood-row{margin-bottom:12px}
+.blood-label{font-size:11px;color:#867461;font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin:0 0 6px}
+.blood-chip{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;margin:0 4px 4px 0;background:#f0e0d1;color:#221a11}
+.blood-chip.match{background:#ba1a1a;color:#fff}
+.cap-row{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+.cap-chip{padding:4px 12px;border-radius:20px;font-size:11px;font-weight:600;background:#f0e0d1;color:#221a11}
+.cap-chip.blood-match{background:#E1F5EE;color:#0F6E56}
+.cta-row{display:flex;gap:10px}
+.cta-nav{flex:1;padding:12px 0;border-radius:10px;border:none;background:#14213D;color:#fff;font-size:13px;font-weight:800;cursor:pointer;font-family:'Space Grotesk',sans-serif;display:flex;align-items:center;justify-content:center;gap:6px;text-decoration:none}
+.cta-call{flex:1;padding:12px 0;border-radius:10px;border:1px solid #d9c3ad;background:transparent;color:#14213D;font-size:13px;font-weight:700;cursor:pointer;text-align:center;text-decoration:none;font-family:'Space Grotesk',sans-serif;display:flex;align-items:center;justify-content:center;gap:6px}
+.emergency-strip{margin-top:20px;background:rgba(186,26,26,0.06);border:1px solid rgba(186,26,26,0.15);border-radius:12px;padding:14px 18px;display:flex;align-items:center;justify-content:space-between}
+.emergency-strip a{padding:8px 18px;border-radius:8px;background:#ba1a1a;color:#fff;font-size:12px;font-weight:700;text-decoration:none;font-family:'Space Grotesk',sans-serif;flex-shrink:0}
+.loading-box{background:#fff;border-radius:16px;padding:48px 24px;text-align:center;border:1px solid rgba(0,0,0,0.06)}
+.spinner{width:40px;height:40px;margin:0 auto 16px;border:3px solid rgba(0,0,0,0.06);border-top:3px solid #14213D;border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.offline-banner{background:#FFF3CD;border:1px solid #fca311;border-radius:10px;padding:10px 16px;margin-bottom:14px;display:flex;align-items:center;gap:10px;font-size:12px;color:#633806}
+.bed-green{color:#27AE60}
+.bed-amber{color:#fca311}
+.bed-red{color:#ba1a1a}
 </style>
 </head>
 <body class="pb-20">
@@ -30,73 +63,52 @@
   </div>
 </header>
 <main class="page">
-  <a href="index.html" style="display:inline-flex;align-items:center;gap:6px;color:#534433;font-size:14px;font-weight:600;margin-bottom:16px"><span class="material-symbols-outlined" style="font-size:18px">arrow_back</span>Back</a>
-  <h1 class="t-headline-md" style="margin-bottom:16px">Hospital Routing</h1>
+  <div class="hosp-page">
+    <a href="index.html" style="display:inline-flex;align-items:center;gap:6px;color:#534433;font-size:14px;font-weight:600;margin-bottom:16px;text-decoration:none"><span class="material-symbols-outlined" style="font-size:18px">arrow_back</span>Dashboard</a>
 
-  <!-- Map with route -->
-  <div class="card-level-1 rounded-xl overflow-hidden" style="margin-bottom:20px">
-    <div class="map-bg" style="height:280px;position:relative">
-      <div class="map-road h" style="top:50%"></div>
-      <div class="map-road v" style="left:40%"></div>
-      <!-- Route segments -->
-      <div style="position:absolute;top:calc(50% - 3px);left:44%;width:20%;display:flex;gap:2px;align-items:center">
-        <div class="route-safe" style="width:35%"></div>
-        <div class="route-caution" style="width:30%"></div>
-        <div class="route-risk" style="width:35%"></div>
-      </div>
-      <!-- User dot -->
-      <div style="position:absolute;top:50%;left:44%;transform:translate(-50%,-50%)"><div class="user-dot"></div></div>
-      <!-- Hospital H pins -->
-      <div class="h-pin" style="top:20%;left:70%">🏥 Manipal</div>
-      <div class="h-pin" style="top:60%;left:15%">🏥 Victoria</div>
-      <!-- Route legend -->
-      <div style="position:absolute;bottom:8px;left:8px;background:rgba(255,248,244,.92);border-radius:.5rem;padding:6px 10px;display:flex;gap:10px">
-        <div style="display:flex;align-items:center;gap:4px"><div class="route-safe" style="width:20px"></div><span class="t-label-md" style="color:#534433">Safe</span></div>
-        <div style="display:flex;align-items:center;gap:4px"><div class="route-caution" style="width:20px"></div><span class="t-label-md" style="color:#534433">Caution</span></div>
-        <div style="display:flex;align-items:center;gap:4px"><div class="route-risk" style="width:20px"></div><span class="t-label-md" style="color:#534433">Risk</span></div>
-      </div>
+    <div class="hosp-header">
+      <span class="material-symbols-outlined icon-fill" style="font-size:28px;color:#fca311">local_hospital</span>
+      <h1>Find Hospital</h1>
     </div>
-  </div>
+    <p class="hosp-sub">Ranked by ETA · bed availability · blood match</p>
 
-  <!-- Hospital cards -->
-  <div class="hosp-scroll">
-    <!-- Manipal -->
-    <div class="hosp-card card-level-2 rounded-xl" style="padding:16px">
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px">
-        <div><span class="t-headline-md" style="font-size:18px">Manipal Hospital</span><p class="t-body-sm" style="color:#534433;margin-top:2px">Old Airport Road, BLR</p></div>
-        <span class="eta-pill">7 min</span>
-      </div>
-      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px">
-        <span class="bed-chip" style="background:#1dc4ff;color:#001e2b">Trauma: 4 beds</span>
-        <span class="bed-chip" style="background:#1dc4ff;color:#001e2b">ICU: 2 beds</span>
-        <span class="bed-chip" style="background:#ffdad6;color:#410002">B+ match ✓</span>
-      </div>
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><span class="pre-alert"><span class="material-symbols-outlined icon-fill" style="font-size:12px">check_circle</span>Pre-alert sent</span></div>
-      <button class="btn-primary" style="min-height:44px;font-size:16px" onclick="alert('Routing to Manipal…')">Route Here</button>
+    <div id="offlineBanner" class="offline-banner" style="display:none">
+      <span class="material-symbols-outlined" style="font-size:18px">wifi_off</span>
+      <span>Showing cached results — bed counts may be outdated</span>
     </div>
-    <!-- Victoria -->
-    <div class="hosp-card card-level-1 rounded-xl" style="padding:16px">
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px">
-        <div><span class="t-headline-md" style="font-size:18px">Victoria Hospital</span><p class="t-body-sm" style="color:#534433;margin-top:2px">Ft. Road, BLR</p></div>
-        <span class="eta-pill">12 min</span>
-      </div>
-      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px">
-        <span class="bed-chip" style="background:#1dc4ff;color:#001e2b">Trauma: 2 beds</span>
-        <span class="bed-chip" style="background:#fbebdc;color:#534433">ICU: Full</span>
-      </div>
-      <button class="btn-primary" style="min-height:44px;font-size:16px;background:#fbebdc;color:#534433" onclick="alert('Routing to Victoria…')">Route Here</button>
+
+    <div class="filter-row">
+      <button class="filter-chip active" onclick="setFilter('all',this)"><span class="material-symbols-outlined" style="font-size:16px">list</span>All hospitals</button>
+      <button class="filter-chip" onclick="setFilter('govt',this)"><span class="material-symbols-outlined" style="font-size:16px">account_balance</span>Government</button>
+      <button class="filter-chip" onclick="setFilter('private',this)"><span class="material-symbols-outlined" style="font-size:16px">domain</span>Private</button>
     </div>
-    <!-- Apollo -->
-    <div class="hosp-card card-level-1 rounded-xl" style="padding:16px">
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px">
-        <div><span class="t-headline-md" style="font-size:18px">Apollo Hospitals</span><p class="t-body-sm" style="color:#534433;margin-top:2px">Bannerghatta Rd, BLR</p></div>
-        <span class="eta-pill">18 min</span>
+
+    <div id="loadingBox" class="loading-box">
+      <div class="spinner"></div>
+      <p style="font-size:14px;font-weight:600;margin:0">Finding nearest hospitals…</p>
+      <p style="font-size:12px;color:#867461;margin:6px 0 0">Calculating distance and live traffic ETA</p>
+    </div>
+
+    <div id="hospitalCards" class="hosp-cards" style="display:none"></div>
+
+    <div id="noResults" style="display:none;background:#fff;border-radius:16px;padding:48px 24px;text-align:center;border:1px solid rgba(0,0,0,0.06)">
+      <span class="material-symbols-outlined" style="font-size:48px;color:#867461;display:block;margin-bottom:12px">location_off</span>
+      <p style="font-size:16px;font-weight:700;margin:0 0 6px">No hospitals found nearby</p>
+      <p style="font-size:13px;color:#867461;margin:0 0 20px">Call 108 for emergency ambulance service</p>
+      <a href="tel:108" style="display:inline-flex;align-items:center;gap:8px;padding:12px 28px;border-radius:10px;background:#ba1a1a;color:#fff;font-weight:700;text-decoration:none;font-family:'Space Grotesk',sans-serif;font-size:14px">
+        <span class="material-symbols-outlined" style="font-size:20px">call</span>Call 108
+      </a>
+    </div>
+
+    <div id="emergencyStrip" class="emergency-strip" style="display:none">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span class="material-symbols-outlined" style="font-size:22px;color:#ba1a1a">emergency</span>
+        <div>
+          <p style="font-size:13px;font-weight:700;margin:0">Can't reach a hospital?</p>
+          <p style="font-size:11px;color:#867461;margin:2px 0 0">Call 108 for free ambulance pickup</p>
+        </div>
       </div>
-      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px">
-        <span class="bed-chip" style="background:#1dc4ff;color:#001e2b">Trauma: 6 beds</span>
-        <span class="bed-chip" style="background:#1dc4ff;color:#001e2b">ICU: 4 beds</span>
-      </div>
-      <button class="btn-primary" style="min-height:44px;font-size:16px" onclick="alert('Routing to Apollo…')">Route Here</button>
+      <a href="tel:108">Call 108</a>
     </div>
   </div>
 </main>
@@ -107,5 +119,186 @@
   <a href="history.html" class="bnav-item"><span class="material-symbols-outlined" style="font-size:24px">history</span><span>History</span></a>
   <a href="profile.html" class="bnav-item"><span class="material-symbols-outlined" style="font-size:24px">person</span><span>Profile</span></a>
 </nav>
+
+<script>
+const API_BASE = 'http://localhost:8000';
+let allHospitals = [];
+let currentFilter = 'all';
+
+// ── Fetch nearest hospitals ──
+async function fetchHospitals(lat, lng) {
+  const profile = JSON.parse(localStorage.getItem('medicalProfile') || '{}');
+  const params = new URLSearchParams({ lat, lng, severity: 'P2' });
+  if (profile.bloodType) params.append('blood_type', profile.bloodType);
+
+  try {
+    const res = await fetch(`${API_BASE}/api/hospitals/nearest?${params}`, {
+      method: 'POST', signal: AbortSignal.timeout(8000)
+    });
+    if (!res.ok) throw new Error('Server error');
+    const data = await res.json();
+    // Cache for offline
+    localStorage.setItem('cached_hospitals', JSON.stringify(data));
+    localStorage.setItem('cached_hospitals_ts', Date.now().toString());
+    return data;
+  } catch (e) {
+    console.error('[Hospitals]', e);
+    // Try cached
+    const cached = localStorage.getItem('cached_hospitals');
+    const ts = parseInt(localStorage.getItem('cached_hospitals_ts') || '0');
+    if (cached && Date.now() - ts < 30 * 60 * 1000) {
+      document.getElementById('offlineBanner').style.display = 'flex';
+      return JSON.parse(cached);
+    }
+    return { hospitals: [] };
+  }
+}
+
+// ── Bed color helper ──
+function bedColor(count) {
+  if (count === 0) return 'bed-red';
+  if (count <= 3) return 'bed-amber';
+  return 'bed-green';
+}
+
+// ── Render hospital cards ──
+function renderCards(hospitals) {
+  const container = document.getElementById('hospitalCards');
+  const loading = document.getElementById('loadingBox');
+  const noResults = document.getElementById('noResults');
+  const strip = document.getElementById('emergencyStrip');
+
+  loading.style.display = 'none';
+
+  if (!hospitals || hospitals.length === 0) {
+    container.style.display = 'none';
+    noResults.style.display = 'block';
+    strip.style.display = 'none';
+    return;
+  }
+
+  noResults.style.display = 'none';
+  container.style.display = 'flex';
+  strip.style.display = 'flex';
+
+  const profile = JSON.parse(localStorage.getItem('medicalProfile') || '{}');
+
+  container.innerHTML = hospitals.map((h, i) => {
+    const rank = i + 1;
+    const isFirst = rank === 1;
+    const bloodTypes = (h.blood_types || []).map(bt => {
+      const isMatch = h.blood_match && bt === profile.bloodType;
+      return `<span class="blood-chip${isMatch ? ' match' : ''}">${bt}</span>`;
+    }).join('');
+
+    const caps = [];
+    if (h.has_trauma) caps.push('<span class="cap-chip">Trauma Centre</span>');
+    if (h.has_cath_lab) caps.push('<span class="cap-chip">Cath Lab</span>');
+    if (h.has_neuro) caps.push('<span class="cap-chip">Neuro Unit</span>');
+    if (h.blood_match) caps.push('<span class="cap-chip blood-match">✓ Blood Match</span>');
+
+    return `
+      <div class="hosp-card${isFirst ? ' rank1' : ''}" id="hosp-${h.id}">
+        ${isFirst ? '<div class="best-badge">★ Best Match</div>' : ''}
+        <div class="hosp-name-row">
+          <div style="display:flex;align-items:center;gap:12px;flex:1;min-width:0">
+            <div class="hosp-rank r${rank}">${rank}</div>
+            <div style="min-width:0">
+              <p class="hosp-name" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${h.name}</p>
+              <p class="hosp-type">${h.type === 'govt' ? '🏛 Government' : '🏥 Private'} · ${h.distance_km} km</p>
+            </div>
+          </div>
+          <span class="eta-pill" style="margin-left:12px">${h.eta_text || h.distance_km + ' km'}</span>
+        </div>
+
+        <div class="beds-row">
+          <div class="bed-box">
+            <p class="bed-label">Trauma</p>
+            <p class="bed-count ${bedColor(h.trauma_beds)}" id="trauma-${h.id}">${h.trauma_beds}</p>
+            <p class="bed-sub">beds</p>
+          </div>
+          <div class="bed-box">
+            <p class="bed-label">ICU</p>
+            <p class="bed-count ${bedColor(h.icu_beds)}" id="icu-${h.id}">${h.icu_beds}</p>
+            <p class="bed-sub">beds</p>
+          </div>
+          <div class="bed-box">
+            <p class="bed-label">General</p>
+            <p class="bed-count ${bedColor(h.general_beds)}" id="general-${h.id}">${h.general_beds}</p>
+            <p class="bed-sub">beds</p>
+          </div>
+        </div>
+
+        ${h.blood_bank ? `<div class="blood-row"><p class="blood-label">Blood Bank</p><div>${bloodTypes}</div></div>` : ''}
+        ${caps.length ? `<div class="cap-row">${caps.join('')}</div>` : ''}
+
+        <div class="cta-row">
+          <a href="${h.route_url}" target="_blank" class="cta-nav">
+            <span class="material-symbols-outlined" style="font-size:18px">navigation</span>Navigate
+          </a>
+          <a href="tel:${h.phone}" class="cta-call">
+            <span class="material-symbols-outlined" style="font-size:18px">call</span>Call
+          </a>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  // Subscribe to SSE live bed updates for each hospital
+  hospitals.forEach(h => subscribeSSE(h.id));
+}
+
+// ── SSE live bed updates ──
+function subscribeSSE(hospitalId) {
+  try {
+    const es = new EventSource(`${API_BASE}/api/hospitals/live/${hospitalId}`);
+    es.onmessage = function(e) {
+      try {
+        const data = JSON.parse(e.data);
+        const trauma = document.getElementById('trauma-' + hospitalId);
+        const icu = document.getElementById('icu-' + hospitalId);
+        const general = document.getElementById('general-' + hospitalId);
+        if (trauma) { trauma.textContent = data.trauma_beds; trauma.className = 'bed-count ' + bedColor(data.trauma_beds); }
+        if (icu) { icu.textContent = data.icu_beds; icu.className = 'bed-count ' + bedColor(data.icu_beds); }
+        if (general) { general.textContent = data.general_beds; general.className = 'bed-count ' + bedColor(data.general_beds); }
+      } catch(_) {}
+    };
+    es.onerror = function() { es.close(); };
+  } catch(_) {}
+}
+
+// ── Filter ──
+function setFilter(type, btn) {
+  currentFilter = type;
+  document.querySelectorAll('.filter-chip').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const filtered = type === 'all' ? allHospitals : allHospitals.filter(h => h.type === type);
+  renderCards(filtered);
+}
+
+// ── Init ──
+(async function init() {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const data = await fetchHospitals(pos.coords.latitude, pos.coords.longitude);
+        allHospitals = data.hospitals || [];
+        renderCards(allHospitals);
+      },
+      async () => {
+        // Fallback: Bengaluru center
+        const data = await fetchHospitals(12.9716, 77.5946);
+        allHospitals = data.hospitals || [];
+        renderCards(allHospitals);
+      },
+      { enableHighAccuracy: true, timeout: 8000 }
+    );
+  } else {
+    const data = await fetchHospitals(12.9716, 77.5946);
+    allHospitals = data.hospitals || [];
+    renderCards(allHospitals);
+  }
+})();
+</script>
 </body>
 </html>

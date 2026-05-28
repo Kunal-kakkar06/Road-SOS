@@ -1,0 +1,29 @@
+import os
+from sqlalchemy import Column, String, Float, Integer, DateTime
+from sqlalchemy.sql import func
+import uuid
+from database import Base
+
+class AccidentBlackspot(Base):
+    __tablename__ = "accident_blackspots"
+    
+    id            = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    latitude      = Column(Float,  nullable=False)
+    longitude     = Column(Float,  nullable=False)
+    total_accidents = Column(Integer, default=0)
+    fatal_accidents = Column(Integer, default=0)
+    road_name     = Column(String, nullable=True)
+    area_name     = Column(String, nullable=True)
+    risk_level    = Column(String, default="medium")  # low/medium/high/critical
+    primary_cause = Column(String, nullable=True)
+    intensity     = Column(Float,  default=0.5)       # 0.0–1.0 heatmap weight
+    year          = Column(Integer, nullable=True)
+    created_at    = Column(DateTime, server_default=func.now())
+
+    # Include Geometry location column only if we are using PostgreSQL
+    if "sqlite" not in os.getenv("DATABASE_URL", ""):
+        try:
+            from geoalchemy2 import Geometry
+            location  = Column(Geometry('POINT', srid=4326), nullable=True)
+        except ImportError:
+            pass

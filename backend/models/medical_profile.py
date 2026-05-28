@@ -8,7 +8,11 @@ from database import Base
 class MedicalProfile(Base):
     __tablename__ = "medical_profiles"
 
-    id              = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    import os
+    if "sqlite" in os.getenv("DATABASE_URL", ""):
+        id              = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    else:
+        id              = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id         = Column(String, unique=True, nullable=False, index=True)
 
     # Personal
