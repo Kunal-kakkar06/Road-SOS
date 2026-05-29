@@ -36,7 +36,22 @@ self.addEventListener('fetch', (e) => {
   }
 
   e.respondWith(
-    caches.match(e.request).then((hit) => hit || fetch(e.request))
+    caches.match(e.request).then((hit) => {
+      if (hit) return hit;
+      return fetch(e.request).then((res) => {
+        // Dynamically cache successfully loaded frontend resources (app scripts, stylesheets, fonts)
+        if (res.ok && !url.pathname.startsWith('/api/') && !url.pathname.startsWith('/docs')) {
+          const resClone = res.clone();
+          caches.open(CACHE).then((c) => c.put(e.request, resClone));
+        }
+        return res;
+      }).catch(() => {
+        // Fallback for navigation requests (HTML page loads) when offline
+        if (e.request.headers.get('accept')?.includes('text/html')) {
+          return caches.match('/index.html') || caches.match('/');
+        }
+      });
+    })
   );
 });
 
