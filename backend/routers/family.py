@@ -285,25 +285,28 @@ async def track_location(session_id: str, db: AsyncSession = Depends(get_db)):
         raise HTTPException(404, "Session not found")
 
     async def location_stream():
+        from database import AsyncSessionLocal
         last_sent = None
         while True:
-            # Refresh session to check status
-            await db.refresh(session)
-            if not session.is_active or (session.expires_at and datetime.utcnow() > session.expires_at):
-                yield f"data: {json.dumps({'done': True, 'reason': 'session_ended'})}\n\n"
-                break
+            async with AsyncSessionLocal() as transient_session:
+                result_session = await transient_session.execute(select(TrackingSession).filter(TrackingSession.session_id == session_id))
+                session_obj = result_session.scalars().first()
+                
+                if not session_obj or not session_obj.is_active or (session_obj.expires_at and datetime.utcnow() > session_obj.expires_at):
+                    yield f"data: {json.dumps({'done': True, 'reason': 'session_ended'})}\n\n"
+                    break
 
-            # Read latest position from cache
-            cached = await get_cached(f"location:{session_id}")
-            if cached and cached != last_sent:
-                last_sent = cached
-                data = json.loads(cached)
-                data.update({
-                    "session_id":    session_id,
-                    "hospital_name": session.hospital_name,
-                    "ambulance_name":session.ambulance_name,
-                })
-                yield f"data: {json.dumps(data)}\n\n"
+                # Read latest position from cache
+                cached = await get_cached(f"location:{session_id}")
+                if cached and cached != last_sent:
+                    last_sent = cached
+                    data = json.loads(cached)
+                    data.update({
+                        "session_id":    session_id,
+                        "hospital_name": session_obj.hospital_name,
+                        "ambulance_name":session_obj.ambulance_name,
+                    })
+                    yield f"data: {json.dumps(data)}\n\n"
 
             await asyncio.sleep(5)
 

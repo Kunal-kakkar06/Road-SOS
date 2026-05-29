@@ -263,23 +263,23 @@ async def update_bed_status(
 @router.get("/live/{hospital_id}")
 async def live_bed_updates(hospital_id: str, db: AsyncSession = Depends(get_db)):
     async def event_generator():
+        from database import AsyncSessionLocal
         while True:
             # Create a separate transaction scope inside generator
-            stmt = select(Hospital).filter(Hospital.id == hospital_id)
-            result = await db.execute(stmt)
-            # Expire cache to read fresh state from SQLite db
-            db.expire_all()
-            h = result.scalar_one_or_none()
-            if h:
-                data = {
-                    "hospital_id": hospital_id,
-                    "trauma_beds": h.trauma_beds_available,
-                    "icu_beds": h.icu_beds_available,
-                    "general_beds": h.general_beds_available,
-                    "blood_types": h.blood_types_available or [],
-                    "timestamp": str(h.beds_updated_at),
-                }
-                yield f"data: {json.dumps(data)}\n\n"
+            async with AsyncSessionLocal() as transient_session:
+                stmt = select(Hospital).filter(Hospital.id == hospital_id)
+                result = await transient_session.execute(stmt)
+                h = result.scalar_one_or_none()
+                if h:
+                    data = {
+                        "hospital_id": hospital_id,
+                        "trauma_beds": h.trauma_beds_available,
+                        "icu_beds": h.icu_beds_available,
+                        "general_beds": h.general_beds_available,
+                        "blood_types": h.blood_types_available or [],
+                        "timestamp": str(h.beds_updated_at),
+                    }
+                    yield f"data: {json.dumps(data)}\n\n"
             await asyncio.sleep(30)
 
     return StreamingResponse(
