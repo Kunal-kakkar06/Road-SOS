@@ -1,4 +1,6 @@
 
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
 const DB_NAME     = 'roadsos-db';
 const ALERT_QUEUE = 'family-alert-queue';
 
@@ -86,7 +88,7 @@ export const startLocationSharing = (sessionId, onStop) => {
 
       if (navigator.onLine) {
         try {
-          await fetch('http://localhost:8000/api/family/location', {
+          await fetch(`${API_BASE}/api/family/location`, {
             method:  'POST',
             headers: { 'Content-Type': 'application/json' },
             body:    JSON.stringify({ session_id: sessionId, latitude: lat, longitude: lng }),
@@ -112,7 +114,7 @@ export const stopLocationSharing = (sessionId) => {
   clearInterval(gpsInterval);
   gpsInterval = null;
   // Close session on server
-  fetch(`http://localhost:8000/api/family/session/${sessionId}`, { method: 'DELETE' }).catch(() => {});
+  fetch(`${API_BASE}/api/family/session/${sessionId}`, { method: 'DELETE' }).catch(() => {});
 };
 
 
@@ -142,7 +144,7 @@ export const sendFamilyAlert = async (sosEventId, coords) => {
   // ── ONLINE PATH ──────────────────────────────────────────
   if (navigator.onLine) {
     try {
-      const res = await fetch('http://localhost:8000/api/family/alert', {
+      const res = await fetch(`${API_BASE}/api/family/alert`, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify(alertData),
@@ -187,7 +189,7 @@ export const sendFamilyAlert = async (sosEventId, coords) => {
 
 // ── Subscribe to live location updates (family view) ──────────
 export const subscribeToTracking = (sessionId, onUpdate, onEnd) => {
-  const es = new EventSource(`http://localhost:8000/api/family/track/${sessionId}`);
+  const es = new EventSource(`${API_BASE}/api/family/track/${sessionId}`);
   es.onmessage = (e) => {
     try {
       const data = JSON.parse(e.data);
@@ -202,7 +204,7 @@ export const subscribeToTracking = (sessionId, onUpdate, onEnd) => {
 // ── Update session when hospital/ambulance confirmed ──────────
 export const updateTrackingStatus = async (sessionId, { hospitalName, ambulanceName, severity }) => {
   if (!sessionId || !navigator.onLine) return;
-  await fetch(`http://localhost:8000/api/family/session/${sessionId}/status`, {
+  await fetch(`${API_BASE}/api/family/session/${sessionId}/status`, {
     method:  'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body:    JSON.stringify({

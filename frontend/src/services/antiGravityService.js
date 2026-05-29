@@ -1,3 +1,5 @@
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
 let isMonitoring = false;
 let lastImpact = 0;
 let stillnessTimer = null;
@@ -61,7 +63,7 @@ const handleMotion = (event) => {
 
 export const reportFallToBackend = async (impactForce, userId = "user123") => {
   try {
-    const res = await fetch('http://localhost:8000/api/anti-gravity/fall-detected', {
+    const res = await fetch(`${API_BASE}/api/anti-gravity/fall-detected`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -87,7 +89,7 @@ export const reportFallToBackend = async (impactForce, userId = "user123") => {
 
 export const cancelFallAlert = async (alertId, userId = "user123") => {
   try {
-    const res = await fetch('http://localhost:8000/api/anti-gravity/cancel-alert', {
+    const res = await fetch(`${API_BASE}/api/anti-gravity/cancel-alert`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ alert_id: alertId, user_id: userId })

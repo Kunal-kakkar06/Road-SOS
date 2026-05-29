@@ -238,11 +238,11 @@ def get_mock_triage(
     }
 
 @app.post("/api/triage/image", response_model=TriageImageResponse)
-async def triage_image(file: Optional[UploadFile] = None):
+async def triage_image(file: Optional[UploadFile] = File(None)):
     return {"label": "Visible deep cut/bleeding", "confidence": 0.92}
 
 @app.post("/api/triage/voice", response_model=TriageVoiceResponse)
-async def triage_voice(file: Optional[UploadFile] = None):
+async def triage_voice(file: Optional[UploadFile] = File(None)):
     return {"transcript": "I am feeling dizzy, have a strong chest pain, and cannot breathe properly."}
 
 @app.post("/api/triage", response_model=TriageResponse)

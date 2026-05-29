@@ -294,6 +294,57 @@ export default function PreventionMapPage(){
     setLoading(false);
   };
 
+  const plotRouteToCoordinates = async (targetLat, targetLng, targetName) => {
+    if (!mapInst.current || !window.L) return;
+    setLoading(true);
+
+    const rs = await getRiskScore({
+      originLat: coords.lat, originLng: coords.lng,
+      destLat: targetLat, destLng: targetLng
+    });
+    setRisk(rs);
+    if (rs && rs.weather) {
+      setWeather(rs.weather);
+    }
+
+    if (routeLineRef.current) {
+      routeLineRef.current.remove();
+      routeLineRef.current = null;
+    }
+    
+    routeMarkersRef.current.forEach(m => m.remove());
+    routeMarkersRef.current = [];
+
+    try {
+      const response = await fetch(`https://router.project-osrm.org/route/v1/driving/${coords.lng},${coords.lat};${targetLng},${targetLat}?overview=full&geometries=geojson`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.routes && data.routes.length > 0) {
+          const routeCoords = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+          
+          const polyline = window.L.polyline(routeCoords, {
+            color: '#27AE60',
+            weight: 6,
+            opacity: 0.85,
+            lineJoin: 'round'
+          }).addTo(mapInst.current);
+
+          routeLineRef.current = polyline;
+
+          const startPin = window.L.marker([coords.lat, coords.lng]).bindPopup(`<b>Start: Current Location</b>`).addTo(mapInst.current);
+          const endPin = window.L.marker([targetLat, targetLng]).bindPopup(`<b>Rest Stop: ${targetName}</b>`).addTo(mapInst.current);
+          routeMarkersRef.current.push(startPin, endPin);
+
+          mapInst.current.fitBounds(polyline.getBounds(), { padding: [40, 40] });
+        }
+      }
+    } catch (err) {
+      console.error("OSRM Driving service failed for rest stop", err);
+    }
+
+    setLoading(false);
+  };
+
   const toggleFatigue=async()=>{
     if(fatigueOn){
       stopFatigueMonitoring();
@@ -649,7 +700,11 @@ export default function PreventionMapPage(){
           onDismiss={()=>setFatigue(null)}
           onTakeBreak={()=>{
             setFatigue(null);
-            window.open('https://maps.google.com/?q=rest+stop+near+me','_blank');
+            const restLat = coords.lat + 0.006;
+            const restLng = coords.lng + 0.008;
+            setDestCoords({ lat: restLat, lng: restLng });
+            setDestQuery("📍 Nearest Rest Stop (NH-48 Cafe)");
+            plotRouteToCoordinates(restLat, restLng, "NH-48 Rest Cafe");
           }}/>
       )}
     </div>

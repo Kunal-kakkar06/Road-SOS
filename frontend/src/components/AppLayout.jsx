@@ -70,7 +70,6 @@ export default function AppLayout() {
           <NavLink to="/" className="dash-wordmark">RoadSOS</NavLink>
           <nav className="dash-nav-desktop">
             <NavLink to="/map" className="dash-nav-link">Live Map</NavLink>
-            <NavLink to="/prevention" className="dash-nav-link">Prevention</NavLink>
             <NavLink to="/history" className="dash-nav-link">History</NavLink>
             <NavLink to="/medical-profile" className="dash-nav-link">Medical ID</NavLink>
           </nav>

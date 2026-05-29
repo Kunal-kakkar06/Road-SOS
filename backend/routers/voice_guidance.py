@@ -163,7 +163,10 @@ async def nearby_responders(req: ResponderRequest, db: AsyncSession = Depends(ge
                 "name": f"{p.name} ({p.vehicle_number})",
                 "distance_m": dist_m,
                 "eta_min": eta,
-                "cert_level": p.type.upper() if p.type else "Emergency Responder"
+                "cert_level": p.type.upper() if p.type else "Emergency Responder",
+                "lat": p.latitude,
+                "lng": p.longitude,
+                "phone": p.phone
             })
             
         # Sort by distance
@@ -176,13 +179,19 @@ async def nearby_responders(req: ResponderRequest, db: AsyncSession = Depends(ge
                     "name": "Alex M. (Off-duty EMT)",
                     "distance_m": 120,
                     "eta_min": 2,
-                    "cert_level": "Paramedic"
+                    "cert_level": "Paramedic",
+                    "lat": 12.9726,
+                    "lng": 77.5956,
+                    "phone": "+91 99001 23456"
                 },
                 {
                     "name": "Sarah J.",
                     "distance_m": 350,
                     "eta_min": 5,
-                    "cert_level": "CPR Certified"
+                    "cert_level": "CPR Certified",
+                    "lat": 12.9740,
+                    "lng": 77.5960,
+                    "phone": "+91 99002 98765"
                 }
             ]
             
@@ -195,13 +204,19 @@ async def nearby_responders(req: ResponderRequest, db: AsyncSession = Depends(ge
                     "name": "Alex M. (Off-duty EMT)",
                     "distance_m": 120,
                     "eta_min": 2,
-                    "cert_level": "Paramedic"
+                    "cert_level": "Paramedic",
+                    "lat": 12.9726,
+                    "lng": 77.5956,
+                    "phone": "+91 99001 23456"
                 },
                 {
                     "name": "Sarah J.",
                     "distance_m": 350,
                     "eta_min": 5,
-                    "cert_level": "CPR Certified"
+                    "cert_level": "CPR Certified",
+                    "lat": 12.9740,
+                    "lng": 77.5960,
+                    "phone": "+91 99002 98765"
                 }
             ]
         }

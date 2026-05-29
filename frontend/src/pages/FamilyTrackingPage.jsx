@@ -9,6 +9,8 @@ const SEV_STYLE = {
   P4:{bg:'#27AE60',text:'#fff',label:'MINOR'},
 };
 
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
 export default function FamilyTrackingPage() {
   const { sessionId }  = useParams();
   const [session,  setSession]  = useState(null);
@@ -44,7 +46,7 @@ export default function FamilyTrackingPage() {
 
   // Load initial session data
   useEffect(() => {
-    fetch(`http://localhost:8000/api/family/session/${sessionId}`)
+    fetch(`${API_BASE}/api/family/session/${sessionId}`)
       .then(r => r.json())
       .then(data => {
         setSession(data);

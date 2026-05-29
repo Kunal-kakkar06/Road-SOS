@@ -138,6 +138,7 @@ export default function VoiceGuidance({ onClose, initialInjury = "bleeding" }) {
   const [audioIds, setAudioIds] = useState([]);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [userLoc, setUserLoc] = useState({ lat: 12.9716, lng: 77.5946 });
   
   const [responders, setResponders] = useState([]);
   const [isTriggerSOS, setIsTriggerSOS] = useState(false);
@@ -201,20 +202,20 @@ export default function VoiceGuidance({ onClose, initialInjury = "bleeding" }) {
   const handleOptionSelect = async (option) => {
     const res = await getDecisionTreeProgress(currentNode, option);
     if (res && res.is_complete && res.final_instruction) {
-      const finalSteps = res.final_instruction.steps;
-      const finalAudios = res.final_instruction.audio_file_ids;
+      const finalSteps = res.final_instruction.steps || [];
+      const finalAudios = res.final_instruction.audio_file_ids || [];
       
       setSteps(finalSteps);
       setAudioIds(finalAudios);
-      setIsTriggerSOS(res.final_instruction.auto_trigger_sos);
+      setIsTriggerSOS(res.final_instruction.auto_trigger_sos || false);
       setCurrentStepIndex(0);
       setActiveTab('instructions');
       
       if (autoSpeak && finalAudios.length > 0) {
         playStep(0, finalAudios, finalSteps);
       }
-    } else if (res && !res.is_complete) {
-      setCurrentQuestionText(res.next_question || res.text);
+    } else if (res && !res.is_complete && res.options) {
+      setCurrentQuestionText(res.next_question || res.text || "");
       setCurrentOptions(res.options);
     }
   };
@@ -259,6 +260,7 @@ export default function VoiceGuidance({ onClose, initialInjury = "bleeding" }) {
         async (position) => {
           const lat = position.coords.latitude;
           const lng = position.coords.longitude;
+          setUserLoc({ lat, lng });
           const res = await getNearbyResponders(lat, lng);
           if (res && res.responders) {
             setResponders(res.responders);
@@ -267,11 +269,13 @@ export default function VoiceGuidance({ onClose, initialInjury = "bleeding" }) {
         async () => {
           const lat = 12.9716;
           const lng = 77.5946;
+          setUserLoc({ lat, lng });
           const res = await getNearbyResponders(lat, lng);
           if (res && res.responders) {
             setResponders(res.responders);
           }
-        }
+        },
+        { timeout: 3000 }
       );
     } else {
       const lat = 12.9716;
@@ -285,7 +289,7 @@ export default function VoiceGuidance({ onClose, initialInjury = "bleeding" }) {
 
   const styles = {
     modal: {
-      position: 'fixed', inset: 0, zIndex: 10000,
+      position: 'fixed', inset: 0, zIndex: 99999,
       background: '#f1f5f9', display: 'flex', flexDirection: 'column',
       fontFamily: 'Inter, sans-serif'
     },
@@ -442,6 +446,42 @@ export default function VoiceGuidance({ onClose, initialInjury = "bleeding" }) {
               }}>
                 STEP 1: TRIAGE QUESTION
               </span>
+
+              {/* Category selector chips */}
+              <div className="category-chips-row" style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 12, marginBottom: 16, borderBottom: '1px solid rgba(15,23,42,0.06)' }}>
+                {[
+                  { id: 'bleeding', label: 'Bleeding', icon: 'healing' },
+                  { id: 'choking', label: 'Choking', icon: 'airwave' },
+                  { id: 'burns', label: 'Burns', icon: 'local_fire_department' },
+                  { id: 'cpr', label: 'CPR', icon: 'emergency_heart' }
+                ].map(cat => {
+                  const isActive = currentNode.toLowerCase() === cat.id;
+                  return (
+                    <button
+                      key={cat.id}
+                      onClick={() => loadInitialTree(cat.id)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 6,
+                        padding: '8px 16px',
+                        borderRadius: 20,
+                        border: isActive ? '2px solid #fca311' : '1px solid #e2e8f0',
+                        background: isActive ? 'rgba(252,163,17,0.1)' : '#fff',
+                        color: isActive ? '#b45309' : '#475569',
+                        fontWeight: 700,
+                        fontSize: 12.5,
+                        cursor: 'pointer',
+                        whiteSpace: 'nowrap',
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      <span className="material-symbols-outlined" style={{ fontSize: 16 }}>{cat.icon}</span>
+                      {cat.label}
+                    </button>
+                  );
+                })}
+              </div>
               
               {/* English Question */}
               <h2 style={{ fontSize: 20, fontWeight: 800, color: '#0f172a', marginBottom: 6, fontFamily: 'Space Grotesk, sans-serif', lineHeight: 1.4 }}>
@@ -455,7 +495,7 @@ export default function VoiceGuidance({ onClose, initialInjury = "bleeding" }) {
               )}
               
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                {currentOptions.map((opt, i) => (
+                {currentOptions && currentOptions.map((opt, i) => (
                   <button 
                     key={i} 
                     style={{ ...styles.largeBtn, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'center', gap: 4, height: 'auto', padding: '16px 20px' }} 
@@ -616,15 +656,89 @@ export default function VoiceGuidance({ onClose, initialInjury = "bleeding" }) {
                 First-Aiders within 500m
               </p>
               {responders.length > 0 ? responders.map((r, i) => (
-                <div key={i} style={{
-                  padding: 16, border: '1px solid rgba(15,23,42,0.06)', borderRadius: 12,
-                  background: '#fff', marginBottom: 12, boxShadow: '0 2px 8px rgba(15,23,42,0.02)'
-                }}>
-                  <div style={{ display: 'flex', justifycontent: 'space-between', alignItems: 'center' }}>
+                <div 
+                  key={i} 
+                  onClick={() => {
+                    if (r.lat && r.lng) {
+                      const url = `https://www.google.com/maps/dir/?api=1&origin=${userLoc.lat},${userLoc.lng}&destination=${r.lat},${r.lng}&travelmode=driving`;
+                      window.open(url, '_blank');
+                    }
+                  }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.borderColor = '#fca311';
+                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(252,163,17,0.12)';
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.borderColor = 'rgba(15,23,42,0.06)';
+                    e.currentTarget.style.boxShadow = '0 2px 8px rgba(15,23,42,0.02)';
+                  }}
+                  style={{
+                    padding: 16, border: '1px solid rgba(15,23,42,0.06)', borderRadius: 12,
+                    background: '#fff', marginBottom: 12, boxShadow: '0 2px 8px rgba(15,23,42,0.02)',
+                    display: 'flex', flexDirection: 'column', gap: 10, cursor: 'pointer',
+                    transition: 'all 0.2s ease-in-out'
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ fontWeight: 800, fontSize: 15, color: '#0f172a' }}>{r.name}</span>
                     <span style={{ color: '#fca311', fontWeight: 800, fontSize: 13 }}>{r.eta_min} min away</span>
                   </div>
-                  <p style={{ color: '#64748b', fontSize: 12.5, marginTop: 4, margin: 0 }}>{r.cert_level} · {r.distance_m}m</p>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <p style={{ color: '#64748b', fontSize: 12.5, margin: 0 }}>{r.cert_level} · {r.distance_m}m</p>
+                    
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                      {r.phone && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation(); // Prevent card click from opening maps route!
+                            window.open(`tel:${r.phone}`);
+                          }}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 4,
+                            padding: '6px 12px',
+                            borderRadius: 8,
+                            border: 'none',
+                            background: '#ba1a1a', // Premium emergency red color
+                            color: '#fff',
+                            fontSize: 11.5,
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            fontFamily: 'Space Grotesk, sans-serif',
+                            boxShadow: '0 2px 4px rgba(0,0,0,0.08)',
+                            transition: 'all 0.15s ease'
+                          }}
+                        >
+                          <span className="material-symbols-outlined" style={{ fontSize: 13 }}>call</span>
+                          Call
+                        </button>
+                      )}
+                      
+                      {r.lat && r.lng && (
+                        <button
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 4,
+                            padding: '6px 12px',
+                            borderRadius: 8,
+                            border: 'none',
+                            background: '#14213D',
+                            color: '#fff',
+                            fontSize: 11.5,
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            fontFamily: 'Space Grotesk, sans-serif',
+                            boxShadow: '0 2px 4px rgba(0,0,0,0.08)'
+                          }}
+                        >
+                          <span className="material-symbols-outlined" style={{ fontSize: 13 }}>navigation</span>
+                          Get Route
+                        </button>
+                      )}
+                    </div>
+                  </div>
                 </div>
               )) : (
                 <div style={{ padding: '24px 0', textAlign: 'center' }}>

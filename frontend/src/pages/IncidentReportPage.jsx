@@ -3,6 +3,8 @@ import { useParams, Link } from 'react-router-dom';
 import TimelineView  from '../components/TimelineView';
 import PhotoUploader from '../components/PhotoUploader';
 
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
 export default function IncidentReportPage() {
   const { incidentId }  = useParams();
   const [incident,  setIncident]  = useState(null);
@@ -23,7 +25,7 @@ export default function IncidentReportPage() {
 
   const fetchIncidentDetails = async () => {
     try {
-      const res = await fetch(`/api/incident/${incidentId}`);
+      const res = await fetch(`${API_BASE}/api/incident/${incidentId}`);
       if (res.ok) {
         const data = await res.json();
         setIncident(data);
@@ -44,17 +46,17 @@ export default function IncidentReportPage() {
   const generatePDF = async () => {
     setGenPDF(true);
     try {
-      const res = await fetch(`/api/incident/${incidentId}/generate-pdf`, { method:'POST' });
+      const res = await fetch(`${API_BASE}/api/incident/${incidentId}/generate-pdf`, { method:'POST' });
       if (res.ok) setPDFReady(true);
     } catch (_) {}
     setGenPDF(false);
   };
 
   const downloadPDF = () =>
-    window.open(`/api/incident/${incidentId}/download-pdf`, '_blank');
+    window.open(`${API_BASE}/api/incident/${incidentId}/download-pdf`, '_blank');
 
   const sharePDF = async () => {
-    const url = `${window.location.origin}/api/incident/${incidentId}/download-pdf`;
+    const url = API_BASE ? `${API_BASE}/api/incident/${incidentId}/download-pdf` : `${window.location.origin}/api/incident/${incidentId}/download-pdf`;
     if (navigator.share) {
       try {
         await navigator.share({ title:'RoadSOS Incident Report', url });
@@ -68,7 +70,7 @@ export default function IncidentReportPage() {
   const handleSaveChanges = async () => {
     setSaving(true);
     try {
-      const res = await fetch(`/api/incident/${incidentId}`, {
+      const res = await fetch(`${API_BASE}/api/incident/${incidentId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

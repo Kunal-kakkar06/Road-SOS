@@ -176,10 +176,10 @@ export default function Home() {
           <div className="card-level-1 quick-actions">
             <p className="quick-actions-label">Quick Actions</p>
             <div className="quick-actions-grid">
-              <div className="quick-action-item" onClick={() => setShowTriage(true)}>
+              <Link to="/triage" className="quick-action-item">
                 <span className="material-symbols-outlined" style={{fontSize:28}}>psychology</span>
                 <span className="quick-action-item-label">AI Triage</span>
-              </div>
+              </Link>
               <Link to="/hospital" className="quick-action-item" style={{position:'relative'}}>
                 <span className="material-symbols-outlined" style={{fontSize:28}}>local_hospital</span>
                 <span className="quick-action-item-label">Find Hospital</span>
@@ -194,9 +194,9 @@ export default function Home() {
                 <span className="quick-action-item-label">Ambulance</span>
                 {!isOnline && <span style={{position:'absolute',top:4,right:6,fontSize:8,background:'#ba1a1a',color:'#fff',padding:'2px 4px',borderRadius:4,fontWeight:800}}>SMS</span>}
               </Link>
-              <Link to="/prevention" className="quick-action-item">
+              <Link to="/map" className="quick-action-item">
                 <span className="material-symbols-outlined" style={{fontSize:28, color: '#27AE60'}}>shield_heart</span>
-                <span className="quick-action-item-label">Prevention</span>
+                <span className="quick-action-item-label">Safety Map</span>
               </Link>
               <Link to="/incident/demo-incident-uuid" className="quick-action-item">
                 <span className="material-symbols-outlined" style={{fontSize:28}}>receipt_long</span>

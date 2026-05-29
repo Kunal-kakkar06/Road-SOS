@@ -12,6 +12,7 @@ import Ambulance from './pages/Ambulance';
 import IncidentReportPage from './pages/IncidentReportPage';
 import FamilyTrackingPage from './pages/FamilyTrackingPage';
 import PreventionMapPage from './pages/PreventionMapPage';
+import AITriagePage from './pages/AITriagePage';
 
 function App() {
   return (
@@ -21,13 +22,13 @@ function App() {
           <Route path="/"                  element={<Home />} />
           <Route path="/medical-profile"   element={<MedicalProfilePage />} />
           <Route path="/digilocker/callback" element={<DigiLockerCallback />} />
-          <Route path="/map"               element={<LiveMap />} />
+          <Route path="/map"               element={<PreventionMapPage />} />
           <Route path="/history"           element={<History />} />
           <Route path="/hospital"          element={<Hospital />} />
           <Route path="/first-aid"         element={<FirstAid />} />
           <Route path="/ambulance"         element={<Ambulance />} />
           <Route path="/incident/:incidentId" element={<IncidentReportPage />} />
-          <Route path="/prevention"        element={<PreventionMapPage />} />
+          <Route path="/triage"            element={<AITriagePage />} />
         </Route>
         <Route path="/mock-digilocker" element={<MockDigiLocker />} />
         <Route path="/track/:sessionId" element={<FamilyTrackingPage />} />
