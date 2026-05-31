@@ -232,3 +232,10 @@ cd ROADSOS
 ## 📄 License
 
 This project is licensed under the MIT License.
+
+---
+
+## 📌 Final Note
+
+> RoadSOS was developed to address critical communication and response delays during medical emergencies. By combining local real-time discovery with Gemini-powered triage guidance, the platform aims to empower bystanders and victims to secure the "golden hour" and save lives on the road.
+
