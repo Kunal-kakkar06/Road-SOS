@@ -125,16 +125,23 @@ SMS Alerts & User Guidance
 ## 📸 Screenshots
 
 ### Home Page
-*(Add Screenshot Here)*
+<img width="1470" height="836" alt="image" src="https://github.com/user-attachments/assets/3929f97f-6566-4af2-822d-9eeb143e6198" />
+
 
 ### AI Triage
-*(Add Screenshot Here)*
+<img width="1470" height="836" alt="image" src="https://github.com/user-attachments/assets/60a55a15-8d81-420f-a4d5-8a603bf53cbd" />
+
 
 ### Nearby Services
-*(Add Screenshot Here)*
+<img width="1470" height="836" alt="image" src="https://github.com/user-attachments/assets/2872d61b-cf06-447d-9054-92aa0804b0e4" />
+<img width="1470" height="836" alt="image" src="https://github.com/user-attachments/assets/b8b360ec-bd4f-4922-a64c-7a60f9e241ef" />
+<img width="1470" height="836" alt="image" src="https://github.com/user-attachments/assets/1e863eac-d89c-4fd4-86f9-708ab5c14565" />
+
+
 
 ### SOS Assistance
-*(Add Screenshot Here)*
+<img width="1470" height="836" alt="image" src="https://github.com/user-attachments/assets/b94ca3d8-f605-40de-b8ba-44f701e23c51" />
+
 
 ---
 
@@ -213,7 +220,8 @@ cd ROADSOS
 
 ## 👥 Team
 
-* Kunal Kakkar — Project Lead & Lead Developer
+* Kunal — Project Lead & Lead Developer
+* Gaurav Sehrawat - Backend & System Integration
 
 ---
 
