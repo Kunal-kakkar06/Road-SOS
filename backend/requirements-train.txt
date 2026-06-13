@@ -1,0 +1,10 @@
+# ML Model Training dependencies (run locally only, NOT deployed to Vercel)
+# Install with: pip install -r requirements-train.txt
+-r requirements.txt
+xgboost
+scikit-learn
+pandas
+scipy
+shap
+gTTS
+firebase-admin
