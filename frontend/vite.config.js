@@ -18,14 +18,6 @@ export default defineConfig({
   build: {
     chunkSizeWarningLimit: 600,
     rollupOptions: {
-      output: {
-        manualChunks: {
-          // Split React core into its own chunk
-          'react-vendor': ['react', 'react-dom'],
-          // Split router into its own chunk
-          'router-vendor': ['react-router-dom'],
-        },
-      },
     },
   },
 })

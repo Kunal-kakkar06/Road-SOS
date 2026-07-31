@@ -41,6 +41,79 @@ async def lifespan(app: FastAPI):
             session.add(demo_record)
             await session.commit()
             print("Seeded blank demo-incident-uuid successfully.")
+
+        # 1. Auto-seed hospitals if empty
+        from models.hospital_model import Hospital
+        from data.seed_hospitals import BENGALURU_HOSPITALS
+        h_result = await session.execute(select(Hospital))
+        if not h_result.scalars().first():
+            print("Auto-seeding hospitals...")
+            for h in BENGALURU_HOSPITALS:
+                hospital = Hospital(
+                    name=h["name"],
+                    address=h["address"],
+                    phone=h.get("phone"),
+                    type=h["type"],
+                    location=None,
+                    latitude=h["lat"],
+                    longitude=h["lng"],
+                    trauma_beds_total=h["trauma_beds_total"],
+                    trauma_beds_available=h["trauma_beds_available"],
+                    icu_beds_total=h["icu_beds_total"],
+                    icu_beds_available=h["icu_beds_available"],
+                    general_beds_available=h["general_beds_available"],
+                    blood_bank=h["blood_bank"],
+                    blood_types_available=h["blood_types_available"],
+                    has_trauma_center=h["has_trauma_center"],
+                    has_cath_lab=h["has_cath_lab"],
+                    has_neuro_unit=h["has_neuro_unit"],
+                )
+                session.add(hospital)
+            await session.commit()
+            print("Auto-seeded hospitals successfully.")
+
+        # 2. Auto-seed providers and ambulances if empty
+        from models import Provider, Ambulance
+        from seed import providers_data, locations
+        import datetime
+        p_result = await session.execute(select(Provider))
+        if not p_result.scalars().first():
+            print("Auto-seeding providers and ambulances...")
+            db_providers = []
+            for p in providers_data:
+                prov = Provider(
+                    name=p["name"],
+                    licence_number=p["licence_number"],
+                    licence_expiry=datetime.date(2030, 1, 1),
+                    is_verified=True,
+                    contact_phone=p["contact_phone"]
+                )
+                session.add(prov)
+                db_providers.append(prov)
+            await session.flush()
+
+            ambulance_index = 1
+            for i, prov in enumerate(db_providers):
+                for j in range(2):
+                    loc_idx = (i * 2 + j) % len(locations)
+                    loc = locations[loc_idx]
+                    noise_lat = ((i * 3 + j * 7) % 10 - 5) * 0.002
+                    noise_lng = ((i * 7 + j * 3) % 10 - 5) * 0.002
+
+                    amb = Ambulance(
+                        provider_id=prov.id,
+                        vehicle_number=f"KA-03-EM-{1000 + ambulance_index}",
+                        driver_name=f"Driver {ambulance_index}",
+                        driver_phone=f"+9199000{10000 + ambulance_index}",
+                        is_available=True,
+                        current_lat=loc["lat"] + noise_lat,
+                        current_lng=loc["lng"] + noise_lng,
+                        last_ping=datetime.datetime.now()
+                    )
+                    session.add(amb)
+                    ambulance_index += 1
+            await session.commit()
+            print("Auto-seeded providers and ambulances successfully.")
     yield
 
 
@@ -239,11 +312,11 @@ def get_mock_triage(
     }
 
 @app.post("/api/triage/image", response_model=TriageImageResponse)
-async def triage_image(file: Optional[UploadFile] = File(None)):
+async def triage_image():
     return {"label": "Visible deep cut/bleeding", "confidence": 0.92}
 
 @app.post("/api/triage/voice", response_model=TriageVoiceResponse)
-async def triage_voice(file: Optional[UploadFile] = File(None)):
+async def triage_voice():
     return {"transcript": "I am feeling dizzy, have a strong chest pain, and cannot breathe properly."}
 
 @app.post("/api/triage", response_model=TriageResponse)

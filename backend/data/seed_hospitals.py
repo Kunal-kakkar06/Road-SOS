@@ -1,8 +1,3 @@
-from sqlalchemy.orm import Session
-from database import engine, Base, AsyncSessionLocal
-from models.hospital_model import Hospital
-from geoalchemy2.shape import from_shape
-from shapely.geometry import Point
 import asyncio
 
 BENGALURU_HOSPITALS = [
@@ -89,14 +84,22 @@ async def seed():
         await db.commit()
 
         import os
+        from database import engine, Base, AsyncSessionLocal
         is_sqlite = "sqlite" in os.getenv("DATABASE_URL", "")
+        
+        # Dynamic import helper for PostGIS
+        def get_geom_point(lng, lat):
+            from geoalchemy2.shape import from_shape
+            from shapely.geometry import Point
+            return from_shape(Point(lng, lat), srid=4326)
+
         for h in BENGALURU_HOSPITALS:
             hospital = Hospital(
                 name         = h["name"],
                 address      = h["address"],
                 phone        = h.get("phone"),
                 type         = h["type"],
-                location     = None if is_sqlite else from_shape(Point(h["lng"], h["lat"]), srid=4326),
+                location     = None if is_sqlite else get_geom_point(h["lng"], h["lat"]),
                 latitude     = h["lat"],
                 longitude    = h["lng"],
                 trauma_beds_total     = h["trauma_beds_total"],
