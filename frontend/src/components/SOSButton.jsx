@@ -2,6 +2,8 @@ import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { triggerSOS, registerSW } from '../services/offlineSOS';
 
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
 const HOLD_MS     = 3000;
 const CANCEL_SECS = 15; // 15 seconds robust review window
 
@@ -10,7 +12,7 @@ export default function SOSButton() {
   const [countdown, setCountdown] = useState(CANCEL_SECS);
   const [isOnline,  setIsOnline]  = useState(navigator.onLine);
   const [channels,  setChannels]  = useState({});
-  const [coords,    setCoords]    = useState({ lat: 12.9716, lng: 77.5946 }); // Bangalore default
+  const [coords,    setCoords]    = useState(null); // null until GPS resolves
   const [incidentId, setIncidentId] = useState('');
   const [offlineProgress, setOfflineProgress] = useState(15);
   
@@ -39,23 +41,36 @@ export default function SOSButton() {
     };
   }, []);
 
-  // Fetch nearest hospitals dynamically from backend if online
+  // Get real GPS coords on mount and keep them updated
   useEffect(() => {
-    if (isOnline) {
-      fetch('http://localhost:8000/api/hospitals')
-        .then(r => r.json())
-        .then(data => {
-          if (data && data.length > 0) {
-            setNearestHospital({
-              name: data[0].name,
-              distance: `${data[0].distance_km?.toFixed(1) || '1.1'} km`,
-              beds: data[0].available_beds || 12
-            });
-          }
-        })
-        .catch(() => {});
-    }
-  }, [isOnline]);
+    if (!navigator.geolocation) return;
+    const watchId = navigator.geolocation.watchPosition(
+      (pos) => setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      () => {}, // silently fail — coords remain null until GPS available
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+    return () => navigator.geolocation.clearWatch(watchId);
+  }, []);
+
+  // Fetch nearest hospital for the user's ACTUAL location
+  useEffect(() => {
+    if (!isOnline || !coords) return;
+    fetch(`${API_BASE}/api/hospitals/nearest?lat=${coords.lat}&lng=${coords.lng}&severity=P2`, {
+      method: 'POST',
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (data?.hospitals?.length > 0) {
+          const h = data.hospitals[0];
+          setNearestHospital({
+            name: h.name,
+            distance: `${h.distance_km?.toFixed(1) || '?'} km`,
+            beds: h.trauma_beds ?? h.general_beds ?? 0,
+          });
+        }
+      })
+      .catch(() => {});
+  }, [isOnline, coords]);
 
   // Load contacts when arming or mounting
   useEffect(() => {

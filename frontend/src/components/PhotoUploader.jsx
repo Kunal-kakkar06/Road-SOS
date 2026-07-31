@@ -252,7 +252,7 @@ export default function PhotoUploader({ incidentId, existingPhotos = [], onUploa
           }}>
             {existingPhotos.map((photo, index) => {
               const url = typeof photo === 'string' ? photo : photo.url;
-              const finalUrl = url.startsWith('/') ? `http://localhost:8000${url}` : url;
+              const finalUrl = url;
               const name = photo.filename || `Evidence #${index + 1}`;
 
               return (

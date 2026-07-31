@@ -1,18 +1,7 @@
 {
-  "version": 2,
-  "builds": [
-    {
-      "src": "backend/main.py",
-      "use": "@vercel/python",
-      "config": {
-        "maxLambdaSize": "50mb"
-      }
-    }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "backend/main.py"
-    }
+  "rewrites": [
+    { "source": "/api/:path*", "destination": "https://roadsos-backend-production-c053.up.railway.app/api/:path*" },
+    { "source": "/static/:path*", "destination": "https://roadsos-backend-production-c053.up.railway.app/static/:path*" },
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

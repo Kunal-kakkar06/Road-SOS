@@ -67,7 +67,7 @@ async function flushQueue() {
   if (!unsynced.length) return;
 
   try {
-    const res = await fetch('http://localhost:8000/api/sos/sync', {
+    const res = await fetch('/api/sos/sync', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify({ events: unsynced }),
@@ -125,7 +125,7 @@ async function flushFamilyAlerts() {
   if (!unsynced.length) return;
 
   try {
-    const res = await fetch('http://localhost:8000/api/family/sync-offline', {
+    const res = await fetch('/api/family/sync-offline', {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify({ alerts: unsynced }),

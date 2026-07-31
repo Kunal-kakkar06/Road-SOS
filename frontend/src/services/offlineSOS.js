@@ -54,15 +54,21 @@ export const registerSW = async () => {
 };
 
 // ── Get GPS coordinates ──────────────────────────────────────
+// Returns real device GPS, or a user-saved location override, or null (caller handles null).
 export const getCoords = () =>
-  new Promise((resolve, reject) => {
+  new Promise((resolve) => {
+    // Check for a user-saved location override first (e.g. set by a city selector)
+    const savedLocation = (() => {
+      try { return JSON.parse(localStorage.getItem('userLocationOverride') || 'null'); } catch { return null; }
+    })();
+
     if (!navigator.geolocation) {
-      resolve({ lat: 12.9716, lng: 77.5946 }); // fallback — GPS unavailable
+      resolve(savedLocation || null); // null signals caller to handle missing location
       return;
     }
     navigator.geolocation.getCurrentPosition(
       (p) => resolve({ lat: p.coords.latitude, lng: p.coords.longitude }),
-      () => resolve({ lat: 12.9716, lng: 77.5946 }),
+      () => resolve(savedLocation || null), // GPS denied — use saved location or null
       { enableHighAccuracy: true, timeout: 8000 }
     );
   });
@@ -110,7 +116,12 @@ export const triggerSOS = async () => {
   };
 
   // 1. Get GPS (works offline — hardware)
-  const coords  = await getCoords();
+  const coords = await getCoords();
+  if (!coords) {
+    result.error = 'GPS unavailable and no location override set. Enable location permission or set a city in Settings.';
+    return { ...result, coords: null };
+  }
+  result.coords = coords;
 
   // 2. Load data from localStorage
   const profile  = JSON.parse(localStorage.getItem('medicalProfile')  || '{}');
@@ -251,7 +262,26 @@ export const triggerSOS = async () => {
 
   return {
     ...result,
+    coords,
     family:   familyResult.status === 'fulfilled' ? familyResult.value : null,
     dispatch,
   };
+};
+
+/**
+ * Save a manual location override (e.g. from a city selector dropdown).
+ * This is used as the GPS fallback when browser geolocation is unavailable.
+ * @param {{ lat: number, lng: number, city?: string }} location
+ */
+export const setUserLocationOverride = (location) => {
+  try {
+    localStorage.setItem('userLocationOverride', JSON.stringify(location));
+  } catch (_) {}
+};
+
+/**
+ * Clear a previously saved location override (returns to GPS-only mode).
+ */
+export const clearUserLocationOverride = () => {
+  localStorage.removeItem('userLocationOverride');
 };

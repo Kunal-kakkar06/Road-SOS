@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 
 // Hardcoded userId for prototype without real auth
 const USER_ID = "local_user_01";
-const API_BASE = "http://localhost:8000/api";
+const API_BASE = "/api";
 
 export default function MedicalProfilePage({ onClose, onProfileUpdated }) {
   const [loading, setLoading] = useState(true);

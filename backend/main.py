@@ -53,12 +53,13 @@ app = FastAPI(
 
 allow_origins = [
     os.getenv("FRONTEND_ORIGIN", "http://localhost:5173"),
+    "https://sos-nine-orcin.vercel.app",          # Vercel production
+    "https://*.vercel.app",                         # All Vercel preview deployments
+    "http://localhost:5173",
     "http://localhost:8081",
     "http://127.0.0.1:8081",
     "http://localhost:8080",
     "http://localhost:8082",
-    "http://10.24.113.92:5173",
-    "http://10.24.113.92:8082",
     "null",  # file:// origin
     "*"
 ]
@@ -319,4 +320,5 @@ Make sure that your output has NO conversational prefix or suffix, and is pure J
         )
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    port = int(os.getenv("PORT", 8000))
+    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=False)

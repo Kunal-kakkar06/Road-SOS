@@ -43,18 +43,9 @@ export default function Hospital() {
         setLoading(false);
       },
       (err) => {
-        // Fallback: use Bengaluru center coords
-        (async () => {
-          const result = await getNearestHospitals({
-            lat: 12.9716,
-            lng: 77.5946,
-            severity: 'P2',
-          });
-          setHospitals(result.hospitals || []);
-          setFromCache(!!result.fromCache);
-          setCoords({ lat: 12.9716, lng: 77.5946 });
-          setLoading(false);
-        })();
+        // GPS denied or unavailable — show an error so user knows results may not reflect their location
+        setError('Location access denied. Enable GPS permission for accurate hospital results.');
+        setLoading(false);
       },
       { enableHighAccuracy: true, timeout: 8000 }
     );

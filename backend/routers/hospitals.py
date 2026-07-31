@@ -50,9 +50,8 @@ async def get_nearest_hospitals(
     severity: Optional[str] = Query("P2", description="Severity: P1/P2/P3/P4"),
     db: AsyncSession = Depends(get_db),
 ):
-    # Sanitize client coordinates if they are outside of Bengaluru to prevent extreme distances/ETAs
-    if haversine_km(lat, lng, 12.9716, 77.5946) > 100.0:
-        lat, lng = 12.9716, 77.5946
+    # NOTE: We intentionally do NOT clamp coordinates to Bangalore.
+    # The app supports any city — user-provided coords are used as-is.
 
     # 1. Check Cache
     cache_key = f"hospitals:{round(lat, 3)}:{round(lng, 3)}:{blood_type}:{severity}"
