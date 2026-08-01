@@ -4,6 +4,7 @@ import { getBlackspots,getRiskScore,getWeather,cacheBlackspotsForOffline,searchG
 import { startFatigueMonitoring,stopFatigueMonitoring }
   from '../services/fatigueDetection';
 import FatigueAlert from '../components/FatigueAlert';
+import useLocationCoords from '../hooks/useLocationCoords';
 
 const haversineDistance = (lat1, lon1, lat2, lon2) => {
   const R = 6371; // km
@@ -37,6 +38,7 @@ export default function PreventionMapPage(){
   const [showDestResults, setShowDestResults] = useState(false);
   const [searchingDest, setSearchingDest] = useState(false);
 
+  const { coords: hookCoords } = useLocationCoords();
   const [coords,setCoords] = useState({ lat: 12.9716, lng: 77.5946 });
   const [blackspots,setBlackspots]=useState([]);
   const [risk,setRisk]=useState(null);
@@ -52,14 +54,22 @@ export default function PreventionMapPage(){
     return()=>{window.removeEventListener('online',on);window.removeEventListener('offline',off);};
   },[]);
 
-  // Main Loader & Map Initializer
-  useEffect(()=>{
-    navigator.geolocation.getCurrentPosition(async pos=>{
-      const lat=pos.coords.latitude, lng=pos.coords.longitude;
-      setCoords({lat,lng});
-      setStartCoords({lat,lng});
-      initMap(lat, lng);
-      // Reverse geocode to get a pretty name for live location
+  // Main Loader & Map Initializer based on reactive hookCoords
+  useEffect(() => {
+    if (!hookCoords) return;
+    const { lat, lng } = hookCoords;
+    setCoords({ lat, lng });
+
+    const handleLoad = async () => {
+      setStartCoords({ lat, lng });
+      
+      if (!mapInst.current) {
+        initMap(lat, lng);
+      } else {
+        updateGPSPosition(lat, lng);
+        mapInst.current.setView([lat, lng], 12);
+      }
+
       try {
         const data = await getReverseGeocode(lat, lng);
         if (data && data.display_name) {
@@ -71,33 +81,10 @@ export default function PreventionMapPage(){
         setStartQuery("🟢 Current Location");
       }
       await loadPreventionData(lat, lng);
-    }, async ()=>{
-      const lat = 12.9716;
-      const lng = 77.5946;
-      setCoords({lat,lng});
-      setStartCoords({lat,lng});
-      setStartQuery("🟢 Bangalore Central");
-      initMap(lat, lng);
-      await loadPreventionData(lat, lng);
-    });
-  }, []);
+    };
 
-  // ── 3-Second GPS Update Loop ──
-  useEffect(() => {
-    const interval = setInterval(() => {
-      navigator.geolocation.getCurrentPosition(pos => {
-        const lat = pos.coords.latitude, lng = pos.coords.longitude;
-        updateGPSPosition(lat, lng);
-      }, () => {
-        // Subtle mock drift step to simulate real-time movement during local testing
-        const lat = coords.lat + (Math.random() - 0.5) * 0.0008;
-        const lng = coords.lng + (Math.random() - 0.5) * 0.0008;
-        updateGPSPosition(lat, lng);
-      });
-    }, 3000);
-
-    return () => clearInterval(interval);
-  }, [mapInst.current, coords]);
+    handleLoad();
+  }, [hookCoords]);
 
   const updateGPSPosition = (lat, lng) => {
     setCoords({ lat, lng });

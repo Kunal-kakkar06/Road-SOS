@@ -2,54 +2,41 @@ import { useState, useEffect } from 'react';
 import { Link, useOutletContext } from 'react-router-dom';
 import { getNearestHospitals } from '../services/hospitalService';
 import HospitalCard from '../components/HospitalCard';
+import useLocationCoords from '../hooks/useLocationCoords';
 
 export default function Hospital() {
   const { isOnline } = useOutletContext();
   const [hospitals, setHospitals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [coords, setCoords] = useState(null);
+  const { coords } = useLocationCoords();
   const [filter, setFilter] = useState('all');
   const [fromCache, setFromCache] = useState(false);
 
   useEffect(() => {
-    if (!navigator.geolocation) {
-      setError('Geolocation is not supported by your browser');
+    if (!coords) return;
+    setLoading(true);
+    setError(null);
+
+    (async () => {
+      const profile = (() => {
+        try { return JSON.parse(localStorage.getItem('medicalProfile') || '{}'); }
+        catch (_) { return {}; }
+      })();
+
+      const result = await getNearestHospitals({
+        lat: coords.lat,
+        lng: coords.lng,
+        bloodType: profile.bloodType,
+        severity: 'P2',
+      });
+
+      setHospitals(result.hospitals || []);
+      setFromCache(!!result.fromCache);
+      if (result.error) setError('Could not reach server — showing cached results');
       setLoading(false);
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        const lat = pos.coords.latitude;
-        const lng = pos.coords.longitude;
-        setCoords({ lat, lng });
-
-        const profile = (() => {
-          try { return JSON.parse(localStorage.getItem('medicalProfile') || '{}'); }
-          catch (_) { return {}; }
-        })();
-
-        const result = await getNearestHospitals({
-          lat,
-          lng,
-          bloodType: profile.bloodType,
-          severity: 'P2',
-        });
-
-        setHospitals(result.hospitals || []);
-        setFromCache(!!result.fromCache);
-        if (result.error) setError('Could not reach server — showing cached results');
-        setLoading(false);
-      },
-      (err) => {
-        // GPS denied or unavailable — show an error so user knows results may not reflect their location
-        setError('Location access denied. Enable GPS permission for accurate hospital results.');
-        setLoading(false);
-      },
-      { enableHighAccuracy: true, timeout: 8000 }
-    );
-  }, []);
+    })();
+  }, [coords]);
 
   const filtered = filter === 'all'
     ? hospitals

@@ -62,13 +62,18 @@ export const getCoords = () =>
       try { return JSON.parse(localStorage.getItem('userLocationOverride') || 'null'); } catch { return null; }
     })();
 
+    if (savedLocation) {
+      resolve(savedLocation);
+      return;
+    }
+
     if (!navigator.geolocation) {
-      resolve(savedLocation || null); // null signals caller to handle missing location
+      resolve(null);
       return;
     }
     navigator.geolocation.getCurrentPosition(
       (p) => resolve({ lat: p.coords.latitude, lng: p.coords.longitude }),
-      () => resolve(savedLocation || null), // GPS denied — use saved location or null
+      () => resolve(null), // GPS denied
       { enableHighAccuracy: true, timeout: 8000 }
     );
   });

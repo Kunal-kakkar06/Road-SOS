@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { triggerSOS, registerSW } from '../services/offlineSOS';
+import useLocationCoords from '../hooks/useLocationCoords';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -13,6 +14,7 @@ export default function SOSButton() {
   const [isOnline,  setIsOnline]  = useState(navigator.onLine);
   const [channels,  setChannels]  = useState({});
   const [coords,    setCoords]    = useState(null); // null until GPS resolves
+  const { coords: hookCoords } = useLocationCoords();
   const [incidentId, setIncidentId] = useState('');
   const [offlineProgress, setOfflineProgress] = useState(15);
   
@@ -41,16 +43,12 @@ export default function SOSButton() {
     };
   }, []);
 
-  // Get real GPS coords on mount and keep them updated
+  // Sync coords from the location selector hook
   useEffect(() => {
-    if (!navigator.geolocation) return;
-    const watchId = navigator.geolocation.watchPosition(
-      (pos) => setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-      () => {}, // silently fail — coords remain null until GPS available
-      { enableHighAccuracy: true, timeout: 10000 }
-    );
-    return () => navigator.geolocation.clearWatch(watchId);
-  }, []);
+    if (hookCoords) {
+      setCoords(hookCoords);
+    }
+  }, [hookCoords]);
 
   // Fetch nearest hospital for the user's ACTUAL location
   useEffect(() => {

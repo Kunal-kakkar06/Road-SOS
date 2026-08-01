@@ -9,16 +9,54 @@ import {
 import CrashAlert        from './CrashAlert';
 import ManualCrashReport from './ManualCrashReport';
 
+const CITIES = [
+  { label: '📍 Browser GPS', value: 'gps', lat: null, lng: null },
+  { label: '🇮🇳 Bengaluru', value: 'bengaluru', lat: 12.9716, lng: 77.5946 },
+  { label: '🇬🇧 London', value: 'london', lat: 51.5074, lng: -0.1278 },
+  { label: '🇺🇸 New York', value: 'newyork', lat: 40.7128, lng: -74.0060 },
+  { label: '🇮🇳 Mysuru', value: 'mysuru', lat: 12.2958, lng: 76.6394 },
+];
+
 export default function AppLayout() {
   const isOnline = useNetworkStatus();
   const [showAntiGravity, setShowAntiGravity] = useState(false);
   const location = useLocation();
   const [initials, setInitials] = useState('AK');
+  const [selectedCity, setSelectedCity] = useState('gps');
 
   // Crash detection states
   const [crash,      setCrash]      = useState(null);
   const [showManual, setShowManual] = useState(false);
   const [sensorOn,   setSensorOn]   = useState(false);
+
+  useEffect(() => {
+    try {
+      const override = localStorage.getItem('userLocationOverride');
+      if (override) {
+        const parsed = JSON.parse(override);
+        const matched = CITIES.find(c => c.lat === parsed.lat && c.lng === parsed.lng);
+        if (matched) {
+          setSelectedCity(matched.value);
+          return;
+        }
+      }
+    } catch (_) {}
+    setSelectedCity('gps');
+  }, []);
+
+  const handleCityChange = (e) => {
+    const val = e.target.value;
+    setSelectedCity(val);
+    if (val === 'gps') {
+      localStorage.removeItem('userLocationOverride');
+    } else {
+      const city = CITIES.find(c => c.value === val);
+      if (city) {
+        localStorage.setItem('userLocationOverride', JSON.stringify({ lat: city.lat, lng: city.lng }));
+      }
+    }
+    window.dispatchEvent(new Event('locationChanged'));
+  };
 
   useEffect(() => {
     (async () => {
@@ -73,6 +111,33 @@ export default function AppLayout() {
             <NavLink to="/history" className="dash-nav-link">History</NavLink>
             <NavLink to="/medical-profile" className="dash-nav-link">Medical ID</NavLink>
           </nav>
+          
+          {/* Location Selector Dropdown */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginRight: 8, background: 'rgba(255,255,255,0.06)', padding: '5px 12px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.1)' }}>
+            <span className="material-symbols-outlined" style={{ fontSize: 18, color: '#fca311' }}>location_on</span>
+            <select 
+              value={selectedCity} 
+              onChange={handleCityChange}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#fff',
+                fontFamily: 'Space Grotesk, sans-serif',
+                fontSize: 12,
+                fontWeight: 700,
+                cursor: 'pointer',
+                outline: 'none',
+                paddingRight: 4
+              }}
+            >
+              {CITIES.map(c => (
+                <option key={c.value} value={c.value} style={{ background: '#14213D', color: '#fff' }}>
+                  {c.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
           <button 
             className="anti-gravity-toggle"
             onClick={() => setShowAntiGravity(true)}

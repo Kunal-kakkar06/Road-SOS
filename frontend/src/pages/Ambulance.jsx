@@ -3,6 +3,7 @@ import { Link, useOutletContext } from 'react-router-dom';
 import { findNearestAmbulances, dispatchAmbulance, trackAmbulance } from '../services/ambulanceService';
 import AmbulanceCard from '../components/AmbulanceCard';
 import LiveTrackingMap from '../components/LiveTrackingMap';
+import useLocationCoords from '../hooks/useLocationCoords';
 
 export default function Ambulance() {
   const { isOnline } = useOutletContext();
@@ -11,36 +12,22 @@ export default function Ambulance() {
   const [dispatching, setDispatching] = useState(false);
   const [dispatch, setDispatch] = useState(null);
   const [driverPos, setDriverPos] = useState(null);
-  const [coords, setCoords] = useState(null);
+  const { coords } = useLocationCoords();
   const [filter, setFilter] = useState('all');
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (!navigator.geolocation) {
-      setLoading(false);
-      return;
-    }
+    if (!coords) return;
+    setLoading(true);
+    setError(null);
 
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        const lat = pos.coords.latitude;
-        const lng = pos.coords.longitude;
-        setCoords({ lat, lng });
-        const res = await findNearestAmbulances({ lat, lng });
-        setProviders(res.providers || []);
-        if (res.error) setError('Could not reach server');
-        setLoading(false);
-      },
-      async () => {
-        // Fallback: Bengaluru center
-        setCoords({ lat: 12.9716, lng: 77.5946 });
-        const res = await findNearestAmbulances({ lat: 12.9716, lng: 77.5946 });
-        setProviders(res.providers || []);
-        setLoading(false);
-      },
-      { enableHighAccuracy: true, timeout: 8000 }
-    );
-  }, []);
+    (async () => {
+      const res = await findNearestAmbulances({ lat: coords.lat, lng: coords.lng });
+      setProviders(res.providers || []);
+      if (res.error) setError('Could not reach server');
+      setLoading(false);
+    })();
+  }, [coords]);
 
   // SSE tracking when dispatch is active
   useEffect(() => {

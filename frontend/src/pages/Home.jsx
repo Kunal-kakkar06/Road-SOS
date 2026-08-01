@@ -4,13 +4,14 @@ import MedicalIDCard from '../components/MedicalIDCard';
 import TriageAssistant from '../components/TriageAssistant';
 import SOSButton from '../components/SOSButton';
 import VoiceGuidance from '../components/VoiceGuidance';
+import useLocationCoords from '../hooks/useLocationCoords';
 
 export default function Home() {
   const { isOnline } = useOutletContext();
   const [showTriage, setShowTriage] = useState(false);
   const [showVoiceGuidance, setShowVoiceGuidance] = useState(false);
   const [contacts, setContacts] = useState([]);
-  const [coords, setCoords] = useState({ lat: 12.9716, lng: 77.5946 });
+  const { coords } = useLocationCoords();
   const [locationName, setLocationName] = useState('Bengaluru, KA');
 
   const mapRef = useRef(null);
@@ -113,23 +114,6 @@ export default function Home() {
       }
       setContacts(stored);
     } catch (_) {}
-
-    // Dynamic browser GPS tracker
-    if (navigator.geolocation) {
-      const watchId = navigator.geolocation.watchPosition(
-        (pos) => {
-          setCoords({
-            lat: pos.coords.latitude,
-            lng: pos.coords.longitude
-          });
-        },
-        () => {
-          // Fallback to default Bangalore center if denied
-        },
-        { enableHighAccuracy: true, timeout: 10000 }
-      );
-      return () => navigator.geolocation.clearWatch(watchId);
-    }
   }, []);
 
   return (
