@@ -17,6 +17,8 @@ export default function useLocationCoords() {
     }
   });
 
+  const [gpsError, setGpsError] = useState(null);
+
   useEffect(() => {
     let watchId = null;
 
@@ -27,6 +29,7 @@ export default function useLocationCoords() {
           const override = JSON.parse(overrideStr);
           setCoords({ lat: parseFloat(override.lat), lng: parseFloat(override.lng) });
           setLocationType('override');
+          setGpsError(null);
           if (watchId !== null && navigator.geolocation) {
             navigator.geolocation.clearWatch(watchId);
             watchId = null;
@@ -40,15 +43,17 @@ export default function useLocationCoords() {
         watchId = navigator.geolocation.watchPosition(
           (pos) => {
             setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+            setGpsError(null);
           },
           (err) => {
             console.warn('GPS error, using default Bangalore fallback', err);
-            // Default fallback if GPS fails
+            setGpsError('Location access denied or unavailable. Enable GPS permission for accurate results.');
             setCoords({ lat: 12.9716, lng: 77.5946 });
           },
           { enableHighAccuracy: true, timeout: 10000 }
         );
       } else {
+        setGpsError('Geolocation is not supported by your browser');
         setCoords({ lat: 12.9716, lng: 77.5946 });
       }
     };
@@ -67,5 +72,5 @@ export default function useLocationCoords() {
     };
   }, []);
 
-  return { coords, locationType };
+  return { coords, locationType, gpsError };
 }

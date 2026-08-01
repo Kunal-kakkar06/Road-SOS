@@ -9,14 +9,14 @@ export default function Hospital() {
   const [hospitals, setHospitals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { coords } = useLocationCoords();
+  const { coords, gpsError } = useLocationCoords();
   const [filter, setFilter] = useState('all');
   const [fromCache, setFromCache] = useState(false);
 
   useEffect(() => {
     if (!coords) return;
     setLoading(true);
-    setError(null);
+    setError(gpsError);
 
     (async () => {
       const profile = (() => {

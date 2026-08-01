@@ -12,14 +12,14 @@ export default function Ambulance() {
   const [dispatching, setDispatching] = useState(false);
   const [dispatch, setDispatch] = useState(null);
   const [driverPos, setDriverPos] = useState(null);
-  const { coords } = useLocationCoords();
+  const { coords, gpsError } = useLocationCoords();
   const [filter, setFilter] = useState('all');
   const [error, setError] = useState(null);
 
   useEffect(() => {
     if (!coords) return;
     setLoading(true);
-    setError(null);
+    setError(gpsError);
 
     (async () => {
       const res = await findNearestAmbulances({ lat: coords.lat, lng: coords.lng });
@@ -27,7 +27,7 @@ export default function Ambulance() {
       if (res.error) setError('Could not reach server');
       setLoading(false);
     })();
-  }, [coords]);
+  }, [coords, gpsError]);
 
   // SSE tracking when dispatch is active
   useEffect(() => {
