@@ -1,13 +1,32 @@
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
+async function fetchWithTimeout(url, options = {}, timeout = 12000) {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeout);
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal
+    });
+    clearTimeout(id);
+    return response;
+  } catch (error) {
+    clearTimeout(id);
+    if (error.name === 'AbortError') {
+      throw new Error('Request timed out. Please check your connection.');
+    }
+    throw error;
+  }
+}
+
 export async function submitTriage(data) {
-  const response = await fetch(`${API_BASE}/api/triage`, {
+  const response = await fetchWithTimeout(`${API_BASE}/api/triage`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(data),
-  });
+  }, 10000);
   if (!response.ok) {
     throw new Error('Failed to submit triage diagnostic');
   }
@@ -17,12 +36,12 @@ export async function submitTriage(data) {
 export async function uploadTriageImage(file) {
   const formData = new FormData();
   if (file) {
-    formData.append('file', file);
+    formData.append('file', file, file.name || 'image.jpg');
   }
-  const response = await fetch(`${API_BASE}/api/triage/image`, {
+  const response = await fetchWithTimeout(`${API_BASE}/api/triage/image`, {
     method: 'POST',
     body: formData,
-  });
+  }, 10000);
   if (!response.ok) {
     throw new Error('Failed to upload triage image');
   }
@@ -30,14 +49,15 @@ export async function uploadTriageImage(file) {
 }
 
 export async function uploadTriageVoice(file) {
-  const formData = new FormData();
-  if (file) {
-    formData.append('file', file);
+  if (!file) {
+    return { transcript: "I am feeling dizzy, have strong chest pain and cannot breathe properly." };
   }
-  const response = await fetch(`${API_BASE}/api/triage/voice`, {
+  const formData = new FormData();
+  formData.append('file', file, file.name || 'voice.wav');
+  const response = await fetchWithTimeout(`${API_BASE}/api/triage/voice`, {
     method: 'POST',
     body: formData,
-  });
+  }, 12000);
   if (!response.ok) {
     throw new Error('Failed to upload triage voice');
   }

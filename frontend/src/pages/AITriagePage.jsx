@@ -84,6 +84,7 @@ export default function AITriagePage() {
   const [audioBlob,  setAudioBlob]  = useState(null);
   const [textInput,  setTextInput]  = useState('');
   const [recording,  setRecording]  = useState(false);
+  const [isProcessingAudio, setIsProcessingAudio] = useState(false);
   const [isOnline,   setIsOnline]   = useState(navigator.onLine);
   const [showManual, setShowManual] = useState(false);
   const [manual,     setManual]     = useState({
@@ -127,6 +128,7 @@ export default function AITriagePage() {
       mediaRef.current.onstop = () => {
         const blob = new Blob(chunksRef.current, { type: 'audio/wav' });
         setAudioBlob(blob);
+        setIsProcessingAudio(false);
         stream.getTracks().forEach(t => t.stop());
       };
       mediaRef.current.start();
@@ -139,9 +141,11 @@ export default function AITriagePage() {
   const stopRecording = () => {
     if (mediaRef.current && mediaRef.current.state !== 'inactive') {
       try {
+        setIsProcessingAudio(true);
         mediaRef.current.stop();
       } catch (err) {
         console.error("Error stopping recorder:", err);
+        setIsProcessingAudio(false);
       }
     }
     setRecording(false);
@@ -187,6 +191,7 @@ export default function AITriagePage() {
   };
 
   const hasAnyInput = imageFile || audioBlob || textInput.trim() || showManual || !isOnline;
+  const canAnalyse = hasAnyInput && !isProcessingAudio;
 
   /* ══ RESULT VIEW ════════════════════════════════════════════ */
   if (phase === 'result' && result) {
@@ -543,19 +548,19 @@ export default function AITriagePage() {
         <button
           id="triage-analyse-btn"
           onClick={analyse}
-          disabled={!hasAnyInput}
+          disabled={!canAnalyse}
           style={{
             width: '100%', padding: '15px', borderRadius: 10,
             border: 'none',
-            background: hasAnyInput ? '#14213D' : '#d9c3ad',
+            background: canAnalyse ? '#14213D' : '#d9c3ad',
             color: '#fff', fontSize: 15, fontWeight: 700,
-            cursor: hasAnyInput ? 'pointer' : 'default',
+            cursor: canAnalyse ? 'pointer' : 'default',
             fontFamily: 'Space Grotesk, sans-serif',
-            boxShadow: hasAnyInput ? '0 4px 0 rgba(0,0,0,0.2)' : 'none',
+            boxShadow: canAnalyse ? '0 4px 0 rgba(0,0,0,0.2)' : 'none',
             transition: 'all .15s',
           }}
         >
-          {isOnline ? 'Assess injury severity →' : 'Get offline estimate →'}
+          {isProcessingAudio ? 'Processing voice recording...' : isOnline ? 'Assess injury severity →' : 'Get offline estimate →'}
         </button>
         {!hasAnyInput && isOnline && (
           <p style={{
