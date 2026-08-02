@@ -101,7 +101,18 @@ export async function runTriage({
   let gender = "unspecified";
   try {
     const profile = JSON.parse(localStorage.getItem('medicalProfile') || '{}');
-    if (profile.age) age = profile.age;
+    if (profile.date_of_birth) {
+      const birthDate = new Date(profile.date_of_birth);
+      const today = new Date();
+      let calculatedAge = today.getFullYear() - birthDate.getFullYear();
+      const m = today.getMonth() - birthDate.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+        calculatedAge--;
+      }
+      age = calculatedAge;
+    } else if (profile.age) {
+      age = profile.age;
+    }
     if (profile.gender) gender = profile.gender;
   } catch (_) {}
 
