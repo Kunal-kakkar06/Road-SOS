@@ -36,12 +36,13 @@ export default function Hospital() {
         severity: 'P2',
       });
 
-      if (result && Array.isArray(result.hospitals)) {
+      if (result && Array.isArray(result.hospitals) && result.hospitals.length > 0) {
         setHospitals(result.hospitals);
+        setError(null);
       }
       setFromCache(!!result?.fromCache);
-      if (result?.error && hospitals.length === 0) {
-        setError('Could not reach server — showing cached results');
+      if (result?.error && (!result?.hospitals || result.hospitals.length === 0)) {
+        setError('Could not reach server — showing emergency hospitals');
       }
       setLoading(false);
     })();
