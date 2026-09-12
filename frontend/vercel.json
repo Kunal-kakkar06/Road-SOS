@@ -1,7 +1,7 @@
 {
   "rewrites": [
-    { "source": "/api/:path*", "destination": "https://roadsos-backend-production-c053.up.railway.app/api/:path*" },
-    { "source": "/static/:path*", "destination": "https://roadsos-backend-production-c053.up.railway.app/static/:path*" },
+    { "source": "/api/:path*", "destination": "https://road-sos-l5ck.onrender.com/api/:path*" },
+    { "source": "/static/:path*", "destination": "https://road-sos-l5ck.onrender.com/static/:path*" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
