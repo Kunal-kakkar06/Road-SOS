@@ -270,7 +270,7 @@ async def prometheus_metrics():
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "service": "RoadSOS API", "app_version": APP_VERSION}
+    return {"status": "ok", "service": "RoadSOS API", "app_version": APP_VERSION, "deploy_hash": "2932465-v5"}
 
 @app.get("/api/health")
 def api_health():
