@@ -2,14 +2,14 @@ from sqlalchemy import Column, String, Integer, Boolean, Float, DateTime, JSON, 
 from sqlalchemy.dialects.postgresql import UUID
 from geoalchemy2 import Geometry
 from sqlalchemy.sql import func
-import uuid
+import uuid as uuid_mod
 from database import Base
 
 
 class Hospital(Base):
     __tablename__ = "hospitals"
 
-    id              = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    id              = Column(String(36), primary_key=True, default=lambda: str(uuid_mod.uuid4()))
     name            = Column(String,  nullable=False, index=True)
     address         = Column(Text,    nullable=False)
     phone           = Column(String,  nullable=True)

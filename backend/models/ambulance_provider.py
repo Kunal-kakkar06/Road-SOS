@@ -1,14 +1,14 @@
 from sqlalchemy import Column, String, Boolean, Float, DateTime
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
-import uuid
+import uuid as uuid_mod
 import os
 from database import Base
 
 class AmbulanceProvider(Base):
     __tablename__ = "ambulance_providers"
 
-    id              = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    id              = Column(String(36), primary_key=True, default=lambda: str(uuid_mod.uuid4()))
 
     name             = Column(String,  nullable=False)
     operator_name    = Column(String,  nullable=True)   # driver name

@@ -1,7 +1,7 @@
 from sqlalchemy import Column, String, Float, Boolean, DateTime, JSON, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
-import uuid
+import uuid as uuid_mod
 from database import Base
 
 
@@ -13,7 +13,7 @@ class TrackingSession(Base):
     """
     __tablename__ = "tracking_sessions"
 
-    id              = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    id              = Column(String(36), primary_key=True, default=lambda: str(uuid_mod.uuid4()))
     session_id      = Column(String, unique=True, nullable=False, index=True)
     sos_event_id    = Column(String, nullable=True)
     incident_id     = Column(String, nullable=True)

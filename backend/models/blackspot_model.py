@@ -1,13 +1,13 @@
 import os
 from sqlalchemy import Column, String, Float, Integer, DateTime
 from sqlalchemy.sql import func
-import uuid
+import uuid as uuid_mod
 from database import Base
 
 class AccidentBlackspot(Base):
     __tablename__ = "accident_blackspots"
     
-    id            = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    id            = Column(String, primary_key=True, default=lambda: str(uuid_mod.uuid4()))
     latitude      = Column(Float,  nullable=False)
     longitude     = Column(Float,  nullable=False)
     total_accidents = Column(Integer, default=0)

@@ -1,14 +1,14 @@
 from sqlalchemy import Column, String, Float, DateTime, JSON, Text, Boolean
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
-import uuid
+import uuid as uuid_mod
 from database import Base
 
 
 class Incident(Base):
     __tablename__ = "incidents"
 
-    id              = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    id              = Column(String(36), primary_key=True, default=lambda: str(uuid_mod.uuid4()))
     incident_id     = Column(String, unique=True, nullable=False, index=True)
     user_id         = Column(String, nullable=False, index=True)
 
@@ -47,7 +47,7 @@ class Incident(Base):
 class IncidentEvent(Base):
     __tablename__ = "incident_events"
 
-    id          = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    id          = Column(String(36), primary_key=True, default=lambda: str(uuid_mod.uuid4()))
     incident_id = Column(String, nullable=False, index=True)
     event_type  = Column(String, nullable=False)
     # crash_detected | sos_triggered | ambulance_dispatched |
@@ -60,7 +60,7 @@ class IncidentEvent(Base):
 class FIRTemplate(Base):
     __tablename__ = "fir_templates"
 
-    id         = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    id         = Column(String(36), primary_key=True, default=lambda: str(uuid_mod.uuid4()))
     state      = Column(String, unique=True, nullable=False, index=True)
     steps      = Column(JSON,   nullable=False)
     updated_at = Column(DateTime, server_default=func.now())

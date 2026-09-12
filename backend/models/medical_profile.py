@@ -1,14 +1,14 @@
 from sqlalchemy import Column, String, Boolean, DateTime, JSON, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
-import uuid
+import uuid as uuid_mod
 from database import Base
 
 
 class MedicalProfile(Base):
     __tablename__ = "medical_profiles"
 
-    id              = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    id              = Column(String(36), primary_key=True, default=lambda: str(uuid_mod.uuid4()))
     user_id         = Column(String, unique=True, nullable=False, index=True)
 
     # Personal

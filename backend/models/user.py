@@ -1,4 +1,4 @@
-import uuid
+import uuid as uuid_mod
 import datetime
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey
 from sqlalchemy.sql import func
@@ -9,7 +9,7 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    uuid = Column(String(36), unique=True, index=True, default=lambda: str(uuid.uuid4()))
+    uuid = Column(String(36), unique=True, index=True, default=lambda: str(uuid_mod.uuid4()))
     name = Column(String(255), nullable=False)
     email = Column(String(255), unique=True, index=True, nullable=False)
     hashed_password = Column(String(255), nullable=False)
