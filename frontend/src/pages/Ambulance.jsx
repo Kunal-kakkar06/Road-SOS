@@ -24,7 +24,11 @@ export default function Ambulance() {
     (async () => {
       const res = await findNearestAmbulances({ lat: coords.lat, lng: coords.lng });
       setProviders(res.providers || []);
-      if (res.error) setError('Could not reach server');
+      if (res.error && (!res.providers || res.providers.length === 0)) {
+        setError('Could not reach server — showing offline emergency options');
+      } else {
+        setError(null);
+      }
       setLoading(false);
     })();
   }, [coords, gpsError]);
