@@ -32,6 +32,8 @@ RUN useradd -m -u 10001 -s /bin/bash roadsos && \
     chown -R roadsos:roadsos /app
 
 # Copy application source code
+# Cache-bust: force re-copy on every deploy
+ARG CACHEBUST=1
 COPY --chown=roadsos:roadsos . /app
 
 # Make startup script executable
