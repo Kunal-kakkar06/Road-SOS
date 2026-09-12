@@ -42,8 +42,15 @@ validate_production_configuration()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Tables are now managed by Alembic. Do NOT run Base.metadata.create_all() here.
-    # Alembic migrations must be executed during deployment/startup externally.
+    # Safety fallback: create all tables if they don't exist yet.
+    # Alembic is the primary migration tool (run in start.sh), but this
+    # ensures the app can start on a fresh Postgres DB even if alembic failed.
+    try:
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        print("✅ Database tables verified / created via SQLAlchemy.")
+    except Exception as e:
+        print(f"⚠️  create_all fallback failed: {e}")
 
     # Ensure demo incident exists in database for clean editing audits
     from database import AsyncSessionLocal

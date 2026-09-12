@@ -2,10 +2,15 @@
 set -e
 
 echo "=== RoadSOS API Startup ==="
+echo "DATABASE_URL scheme: ${DATABASE_URL%%:*}"
 
 # Run Alembic migrations before starting the server
 echo "Running Alembic migrations..."
-alembic upgrade head && echo "Migrations complete." || echo "Migrations failed or already up-to-date, continuing..."
+if alembic upgrade head; then
+    echo "✅ Migrations complete."
+else
+    echo "⚠️  Alembic migration failed - will rely on SQLAlchemy create_all fallback in app startup."
+fi
 
 # Start the FastAPI server
 echo "Starting uvicorn server on port ${PORT:-8000}..."
