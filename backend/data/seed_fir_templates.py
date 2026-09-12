@@ -38,9 +38,7 @@ KARNATAKA_STEPS = [
 ]
 
 async def seed_fir():
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-        print("Ensured all database tables exist.")
+    # Database schema is now managed by Alembic.
 
     async with AsyncSessionLocal() as db:
         # Check if template already exists

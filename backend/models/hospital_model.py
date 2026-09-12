@@ -9,11 +9,7 @@ from database import Base
 class Hospital(Base):
     __tablename__ = "hospitals"
 
-    import os
-    if "sqlite" in os.getenv("DATABASE_URL", ""):
-        id              = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    else:
-        id              = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id              = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     name            = Column(String,  nullable=False, index=True)
     address         = Column(Text,    nullable=False)
     phone           = Column(String,  nullable=True)

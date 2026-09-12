@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
+import { getTriageHistory } from '../services/triageService';
 
 export default function History() {
   const { isOnline } = useOutletContext();
@@ -10,8 +11,9 @@ export default function History() {
 
   // Sync with local memory backup
   useEffect(() => {
-    // In our prototype, we will seed a beautiful initial dataset representing both Incidents (P2/P3 severity) and highway Trips (P4 severity)
-    const initialRecords = [
+    const fetchHistory = async () => {
+      // Seed initial mock dataset for demonstration
+      const initialRecords = [
       {
         id: 'r1',
         type: 'incident',
@@ -59,8 +61,48 @@ export default function History() {
       }
     ];
 
-    setRecords(initialRecords);
-    setLoading(false);
+    try {
+      const triageEvents = await getTriageHistory();
+      
+      const mappedTriage = triageEvents.map(t => {
+        const d = new Date(t.created_at);
+        const dateStr = d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+        const yearStr = d.getFullYear().toString();
+        
+        let sevCode = 'P4';
+        if (t.final_severity === 'Critical') sevCode = 'P1';
+        else if (t.final_severity === 'High') sevCode = 'P2';
+        else if (t.final_severity === 'Moderate') sevCode = 'P3';
+        
+        return {
+          id: t.id,
+          type: 'triage',
+          date: dateStr,
+          year: yearStr,
+          severity: sevCode,
+          title: 'AI Triage Assessment',
+          description: `Score: ${(t.final_score * 100).toFixed(0)}% · ${t.final_severity}`,
+          downloadText: t.severity_label || 'View Details',
+          status: t.status,
+          processingMode: t.processing_mode,
+          duration: t.processing_duration_ms,
+          modelVersion: t.model_version,
+          steps: [
+            { time: d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}), text: 'Assessment Completed', done: true }
+          ]
+        };
+      });
+      
+      setRecords([...mappedTriage, ...initialRecords]);
+    } catch (e) {
+      console.warn("Failed to fetch triage history", e);
+      setRecords(initialRecords);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  fetchHistory();
   }, []);
 
   const toggleRow = (id) => {
@@ -234,6 +276,24 @@ export default function History() {
                   padding: '16px 18px',
                   display: 'flex', flexDirection: 'column', gap: 8
                 }}>
+                  {/* Audit Details */}
+                  {r.type === 'triage' && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginBottom: 8, fontSize: 11, color: '#a0aab2' }}>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: 14 }}>memory</span>
+                        {r.status === 'failed' ? 'Failed' : `${r.modelVersion ? 'v' + r.modelVersion : 'Unknown'} (${r.processingMode || 'sync'})`}
+                      </span>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: 14 }}>timer</span>
+                        {r.duration ? `${r.duration}ms` : '—'}
+                      </span>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: 14 }}>fingerprint</span>
+                        {r.id ? r.id.split('-')[0] : '—'}
+                      </span>
+                    </div>
+                  )}
+
                   {r.steps.map((step, sIdx) => (
                     <div key={sIdx} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                       <div style={{

@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: roadsos-api
+    env: docker
+    dockerContext: backend
+    dockerfilePath: backend/Dockerfile
+    region: oregon
+    plan: starter
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: 8000
+      - key: ENVIRONMENT
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: roadsos-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: ALLOWED_ORIGINS
+        value: https://roadsos-app.vercel.app,http://localhost:5174
+
+databases:
+  - name: roadsos-db
+    databaseName: roadsos
+    user: roadsos
+    region: oregon
+    plan: starter

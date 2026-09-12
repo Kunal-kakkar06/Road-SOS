@@ -13,9 +13,14 @@ export default function Hospital() {
   const [filter, setFilter] = useState('all');
   const [fromCache, setFromCache] = useState(false);
 
+  const latKey = coords ? coords.lat.toFixed(3) : null;
+  const lngKey = coords ? coords.lng.toFixed(3) : null;
+
   useEffect(() => {
     if (!coords) return;
-    setLoading(true);
+    if (hospitals.length === 0) {
+      setLoading(true);
+    }
     setError(gpsError);
 
     (async () => {
@@ -27,16 +32,20 @@ export default function Hospital() {
       const result = await getNearestHospitals({
         lat: coords.lat,
         lng: coords.lng,
-        bloodType: profile.bloodType,
+        bloodType: profile.blood_type || profile.bloodType,
         severity: 'P2',
       });
 
-      setHospitals(result.hospitals || []);
-      setFromCache(!!result.fromCache);
-      if (result.error) setError('Could not reach server — showing cached results');
+      if (result && Array.isArray(result.hospitals)) {
+        setHospitals(result.hospitals);
+      }
+      setFromCache(!!result?.fromCache);
+      if (result?.error && hospitals.length === 0) {
+        setError('Could not reach server — showing cached results');
+      }
       setLoading(false);
     })();
-  }, [coords]);
+  }, [latKey, lngKey]);
 
   const filtered = filter === 'all'
     ? hospitals

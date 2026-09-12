@@ -1,0 +1,47 @@
+groups:
+  - name: roadsos_capacity_alerts
+    rules:
+      - alert: RoadSOS_HighDatabaseConnectionPoolUtilization
+        expr: (database_active_connections / database_max_connections) * 100 > 80
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "PostgreSQL connection pool utilization > 80%"
+          description: "Database connection pool utilization is at {{ $value }}% of max capacity."
+
+      - alert: RoadSOS_HighPendingQueueDepth
+        expr: triage_jobs_total{status="pending"} > 50
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Pending triage job queue depth > 50"
+          description: "Queue depth has exceeded 50 pending jobs. Scale ML worker fleet."
+
+      - alert: RoadSOS_WorkerFleetCapacityExhausted
+        expr: (triage_jobs_total{status="pending"} > 100) and (worker_nodes_active <= 2)
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Worker fleet capacity exhausted"
+          description: "Pending queue depth > 100 while active worker count is <= 2. Immediate worker scaling required."
+
+      - alert: RoadSOS_SlowQueryThresholdExceeded
+        expr: rate(database_slow_queries_total[5m]) > 0.05
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Database slow queries detected"
+          description: "Slow queries (>100ms) detected at a rate of {{ $value }} queries/sec."
+
+      - alert: RoadSOS_MemoryUsageHigh
+        expr: (process_resident_memory_bytes / 1024 / 1024) > 1024
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Process RSS memory usage high (>1GB)"
+          description: "RoadSOS process memory usage is {{ $value }} MB."

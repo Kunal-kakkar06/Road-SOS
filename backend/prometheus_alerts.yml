@@ -1,0 +1,92 @@
+groups:
+  - name: roadsos_production_alerts
+    rules:
+      - alert: RoadSOS_API_Outage
+        expr: up{job="roadsos-api"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "RoadSOS API instance is down"
+          description: "API instance {{ $labels.instance }} has been unreachable for more than 1 minute."
+
+      - alert: RoadSOS_Readiness_Failed
+        expr: roadsos_api_ready_status == 0
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "RoadSOS API readiness check failing"
+          description: "The /api/ready probe reports database or ML pipeline unreadiness."
+
+      - alert: RoadSOS_WorkerFleetDegraded
+        expr: worker_nodes_active < 2
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "RoadSOS worker fleet size degraded"
+          description: "Active worker count has dropped below 2 (Current: {{ $value }})."
+
+      - alert: RoadSOS_WorkerFleetDown
+        expr: worker_nodes_active == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "RoadSOS worker fleet offline"
+          description: "Zero active worker nodes are processing background triage jobs."
+
+      - alert: RoadSOS_QueueBuildup
+        expr: triage_jobs_total{status="pending"} > 20
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "RoadSOS triage job queue buildup"
+          description: "Pending triage jobs queue depth exceeds 20 jobs for more than 3 minutes."
+
+      - alert: RoadSOS_OldestPendingJobStale
+        expr: disaster_recovery_oldest_pending_job_age_seconds > 60
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Triage job latency SLO breach"
+          description: "Oldest pending triage job has been waiting for {{ $value }} seconds (>60s SLO limit)."
+
+      - alert: RoadSOS_PostgreSQL_ConnectionFailure
+        expr: increase(database_connection_failures_total[5m]) > 0
+        for: 0m
+        labels:
+          severity: critical
+        annotations:
+          summary: "PostgreSQL database connection failures detected"
+          description: "Database connection failures increased in the last 5 minutes."
+
+      - alert: RoadSOS_Backup_RPO_Violation
+        expr: disaster_recovery_latest_backup_age_seconds > 300
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Database backup RPO target exceeded (>5 minutes)"
+          description: "Age of latest verified PostgreSQL backup is {{ $value }} seconds (Target: <=300s)."
+
+      - alert: RoadSOS_ElevatedErrorRate
+        expr: sum(rate(http_requests_total{status=~"5.."}[5m])) / sum(rate(http_requests_total[5m])) > 0.01
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Elevated HTTP 5xx error rate (>1%)"
+          description: "HTTP 5xx server error rate has exceeded 1% over a 5-minute window."
+
+      - alert: RoadSOS_ElevatedClientErrorRate
+        expr: sum(rate(http_requests_total{status=~"4.."}[5m])) / sum(rate(http_requests_total[5m])) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Elevated HTTP 4xx client error rate (>5%)"
+          description: "HTTP 4xx client error rate has exceeded 5% over a 5-minute window."

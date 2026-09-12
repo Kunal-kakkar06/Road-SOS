@@ -5,7 +5,7 @@ import { startDigiLockerImport } from '../services/digilockerService';
 const BLOOD_TYPES = ['A+','A-','B+','B-','AB+','AB-','O+','O-'];
 const GENDERS     = ['Male','Female','Non-binary','Prefer not to say'];
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_BASE = import.meta.env.VITE_API_URL || '';
 
 export default function MedicalProfilePage() {
   const navigate = useNavigate();

@@ -260,14 +260,15 @@ async def track_location(session_id: str, db: AsyncSession = Depends(get_db)):
             while True:
                 lat += random.uniform(-0.0003, 0.0003)
                 lng += random.uniform(-0.0003, 0.0003)
-                yield f"data: {json.dumps({
+                payload_str = json.dumps({
                     'lat': lat, 'lng': lng, 
                     'ts': datetime.utcnow().isoformat(),
                     'severity': 'P2', 'name': 'Arjun Kumar',
                     'session_id': 'demo-session-id',
                     'hospital_name': 'Manipal Hospital',
                     'ambulance_name': 'CATS Unit 4'
-                })}\n\n"
+                })
+                yield f"data: {payload_str}\n\n"
                 await asyncio.sleep(5)
         return StreamingResponse(
             demo_stream(),

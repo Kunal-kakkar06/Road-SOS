@@ -1,0 +1,73 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": 1,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "title": "API Availability & Status",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+      "targets": [{ "expr": "up{job=\"roadsos-api\"}" }]
+    },
+    {
+      "title": "Active Worker Nodes",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
+      "targets": [{ "expr": "worker_nodes_active" }]
+    },
+    {
+      "title": "Pending Triage Jobs Queue",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
+      "targets": [{ "expr": "triage_jobs_total{status=\"pending\"}" }]
+    },
+    {
+      "title": "Latest Backup Age (Seconds)",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
+      "targets": [{ "expr": "disaster_recovery_latest_backup_age_seconds" }]
+    },
+    {
+      "title": "HTTP Request Rate by Endpoint & Status",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+      "targets": [{ "expr": "rate(http_requests_total[1m])" }]
+    },
+    {
+      "title": "Triage Job Queue Breakdown",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+      "targets": [{ "expr": "triage_jobs_total" }]
+    },
+    {
+      "title": "Database Error & Rollback Counter",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+      "targets": [
+        { "expr": "db_errors_total" },
+        { "expr": "database_connection_failures_total" },
+        { "expr": "database_transaction_rollbacks_total" }
+      ]
+    },
+    {
+      "title": "Off-Site Backup Replication Status",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+      "targets": [
+        { "expr": "disaster_recovery_replication_latest_backup_age_seconds" },
+        { "expr": "disaster_recovery_replication_failures_total" }
+      ]
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": ["roadsos", "production", "monitoring"],
+  "time": { "from": "now-1h", "to": "now" },
+  "title": "RoadSOS Production Operational Dashboard",
+  "version": 1
+}

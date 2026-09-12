@@ -261,6 +261,8 @@ async def dispatch_ambulance(
         "driver_phone":   provider.phone,
         "vehicle_number": provider.vehicle_number,
         "type":           provider.type,
+        "driver_lat":     provider.latitude or (payload.patient_lat + 0.018),
+        "driver_lng":     provider.longitude or (payload.patient_lng + 0.018),
         "eta_minutes":    event.eta_minutes,
         "eta_text":       f"{event.eta_minutes} mins",
         "distance_km":    event.distance_km,

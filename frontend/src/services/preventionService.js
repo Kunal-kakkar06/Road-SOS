@@ -1,5 +1,5 @@
 const DB_NAME='roadsos-db'; const BS_KEY='blackspot-cache';
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_BASE = import.meta.env.VITE_API_URL || '';
 
 const openDB=()=>new Promise((res,rej)=>{
   const r=indexedDB.open(DB_NAME,1);

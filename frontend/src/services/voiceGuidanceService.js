@@ -8,7 +8,7 @@ const treeCache = localforage.createInstance({
   name: 'roadsos-tree'
 });
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_BASE = import.meta.env.VITE_API_URL || '';
 
 // Premium Offline Decision Tree mapping for absolute offline safety
 const LOCAL_TREE = {

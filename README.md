@@ -147,7 +147,7 @@ SMS Alerts & User Guidance
 
 ## 🌐 Live Demo
 
-**Frontend Web App:** [https://frontend-rho-two-73.vercel.app](https://frontend-rho-two-73.vercel.app)
+**Frontend Web App:** [https://sos-nine-orcin.vercel.app](https://sos-nine-orcin.vercel.app)
 
 **Backend API Service:** *(Self-hosted / Localhost)*
 

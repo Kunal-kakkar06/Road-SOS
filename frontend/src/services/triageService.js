@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_BASE = import.meta.env.VITE_API_URL || '';
 
 async function fetchWithTimeout(url, options = {}, timeout = 12000) {
   const controller = new AbortController();
@@ -9,6 +9,12 @@ async function fetchWithTimeout(url, options = {}, timeout = 12000) {
       signal: controller.signal
     });
     clearTimeout(id);
+    if (response.status === 401) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('userRole');
+      window.location.href = '/login';
+      throw new Error('Session expired. Please log in again.');
+    }
     return response;
   } catch (error) {
     clearTimeout(id);
@@ -20,11 +26,15 @@ async function fetchWithTimeout(url, options = {}, timeout = 12000) {
 }
 
 export async function submitTriage(data) {
+  const token = localStorage.getItem('token');
+  const headers = { 'Content-Type': 'application/json' };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  
   const response = await fetchWithTimeout(`${API_BASE}/api/triage`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers,
     body: JSON.stringify(data),
   }, 10000);
   if (!response.ok) {
@@ -33,13 +43,55 @@ export async function submitTriage(data) {
   return await response.json();
 }
 
+export async function submitAsyncTriage(data) {
+  const token = localStorage.getItem('token');
+  const headers = { 'Content-Type': 'application/json' };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  
+  const response = await fetchWithTimeout(`${API_BASE}/api/triage/async`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(data),
+  }, 10000);
+  if (!response.ok) {
+    throw new Error('Failed to queue async triage diagnostic');
+  }
+  return await response.json();
+}
+
+export async function getTriageJobStatus(jobId) {
+  const token = localStorage.getItem('token');
+  const headers = {};
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  
+  const response = await fetchWithTimeout(`${API_BASE}/api/triage/jobs/${jobId}`, {
+    method: 'GET',
+    headers,
+  }, 5000);
+  if (!response.ok) {
+    throw new Error('Failed to retrieve triage job status');
+  }
+  return await response.json();
+}
+
 export async function uploadTriageImage(file) {
+  const token = localStorage.getItem('token');
+  const headers = {};
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
   const formData = new FormData();
   if (file) {
     formData.append('file', file, file.name || 'image.jpg');
   }
   const response = await fetchWithTimeout(`${API_BASE}/api/triage/image`, {
     method: 'POST',
+    headers,
     body: formData,
   }, 10000);
   if (!response.ok) {
@@ -52,14 +104,40 @@ export async function uploadTriageVoice(file) {
   if (!file) {
     return { transcript: "I am feeling dizzy, have strong chest pain and cannot breathe properly." };
   }
+  
+  const token = localStorage.getItem('token');
+  const headers = {};
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
   const formData = new FormData();
   formData.append('file', file, file.name || 'voice.wav');
   const response = await fetchWithTimeout(`${API_BASE}/api/triage/voice`, {
     method: 'POST',
+    headers,
     body: formData,
   }, 12000);
   if (!response.ok) {
     throw new Error('Failed to upload triage voice');
+  }
+  return await response.json();
+}
+
+export async function getTriageHistory() {
+  const token = localStorage.getItem('token');
+  const headers = {};
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  const response = await fetchWithTimeout(`${API_BASE}/api/triage/history`, {
+    method: 'GET',
+    headers,
+  }, 10000);
+  
+  if (!response.ok) {
+    throw new Error('Failed to fetch triage history');
   }
   return await response.json();
 }

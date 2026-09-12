@@ -8,10 +8,7 @@ from database import Base
 class DispatchEvent(Base):
     __tablename__ = "dispatch_events"
 
-    if "sqlite" in os.getenv("DATABASE_URL", ""):
-        id              = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    else:
-        id              = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id              = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
 
     dispatch_id       = Column(String, unique=True, nullable=False, index=True)
     sos_event_id      = Column(String, nullable=True)   # links to sos_events table

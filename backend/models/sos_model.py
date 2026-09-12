@@ -8,10 +8,7 @@ from database import Base
 class SOSEvent(Base):
     __tablename__ = "sos_events"
 
-    if "sqlite" in os.getenv("DATABASE_URL", ""):
-        id              = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    else:
-        id              = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id              = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
 
     event_id        = Column(String,  unique=True, nullable=False, index=True)
     user_id         = Column(String,  nullable=False, index=True)

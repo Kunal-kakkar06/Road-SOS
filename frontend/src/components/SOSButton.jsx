@@ -1,14 +1,15 @@
 import { useState, useRef, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { triggerSOS, registerSW } from '../services/offlineSOS';
+import { Link, useNavigate } from 'react-router-dom';
+import { triggerSOS, registerSW, openSMSFallback } from '../services/offlineSOS';
 import useLocationCoords from '../hooks/useLocationCoords';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_BASE = import.meta.env.VITE_API_URL || '';
 
 const HOLD_MS     = 3000;
 const CANCEL_SECS = 15; // 15 seconds robust review window
 
 export default function SOSButton() {
+  const navigate = useNavigate();
   const [phase,     setPhase]     = useState('idle');
   const [countdown, setCountdown] = useState(CANCEL_SECS);
   const [isOnline,  setIsOnline]  = useState(navigator.onLine);
@@ -143,21 +144,21 @@ export default function SOSButton() {
 
     // Step 1: immediately visible
     const now = () => new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    setLiveSteps([{ icon: 'gps_fixed', label: 'GPS Location Acquired', sub: 'High-accuracy coordinates locked', time: now(), done: true }]);
+    setLiveSteps([{ icon: 'gps_fixed', label: 'GPS Location Acquired', sub: 'High-accuracy coordinates locked', time: now(), done: true, key: 'gps' }]);
     
     const allowedContacts = contacts.filter(c => c.allowed);
     localStorage.setItem('emergencyContacts', JSON.stringify(allowedContacts));
 
     await new Promise(r => setTimeout(r, 500));
-    setLiveSteps(s => [...s, { icon: 'crisis_alert', label: 'SOS Trigger Registered', sub: 'Incident queued in secure local store', time: now(), done: true }]);
+    setLiveSteps(s => [...s, { icon: 'crisis_alert', label: 'SOS Trigger Registered', sub: 'Incident queued in secure local store', time: now(), done: true, key: 'trigger' }]);
 
     const result = await triggerSOS();
     
     await new Promise(r => setTimeout(r, 400));
-    setLiveSteps(s => [...s, { icon: 'cell_tower', label: result.channels.server ? 'Alert Broadcast to Server' : 'Offline Queue — SMS Fallback Active', sub: result.channels.server ? 'Backend received your emergency event' : 'Will sync when signal returns', time: now(), done: result.channels.server }]);
+    setLiveSteps(s => [...s, { icon: 'cell_tower', label: result.channels.server ? 'Alert Broadcast to Server' : 'Offline Queue — SMS Fallback Active', sub: result.channels.server ? 'Backend received your emergency event' : 'Will sync when signal returns', time: now(), done: result.channels.server, key: 'sms' }]);
 
     await new Promise(r => setTimeout(r, 600));
-    setLiveSteps(s => [...s, { icon: 'contacts', label: 'Family & Emergency Contacts Notified', sub: `${allowedContacts.length} contact${allowedContacts.length !== 1 ? 's' : ''} alerted via SMS`, time: now(), done: true }]);
+    setLiveSteps(s => [...s, { icon: 'contacts', label: 'Family & Emergency Contacts Notified', sub: `${allowedContacts.length} contact${allowedContacts.length !== 1 ? 's' : ''} alerted via SMS`, time: now(), done: true, key: 'contacts' }]);
 
     if (result.coords && result.coords.lat) {
       setCoords(result.coords);
@@ -174,27 +175,43 @@ export default function SOSButton() {
         icon: 'ambulance',
         label: `Ambulance Dispatched — ${result.dispatch.provider_name}`,
         sub: `${result.dispatch.vehicle_number} · ETA ${result.dispatch.eta_minutes} min · ${result.dispatch.distance_km} km away`,
-        time: now(), done: true
+        time: now(), done: true, key: 'ambulance'
       }]);
     } else {
       try {
         const cached = JSON.parse(localStorage.getItem('lastDispatch') || 'null');
         if (cached) {
           setDispatchInfo(cached);
-          setLiveSteps(s => [...s, { icon: 'ambulance', label: `Ambulance Dispatched — ${cached.provider_name}`, sub: `${cached.vehicle_number} · ETA ${cached.eta_minutes} min`, time: now(), done: true }]);
+          setLiveSteps(s => [...s, { icon: 'ambulance', label: `Ambulance Dispatched — ${cached.provider_name}`, sub: `${cached.vehicle_number} · ETA ${cached.eta_minutes} min`, time: now(), done: true, key: 'ambulance' }]);
         } else {
-          setLiveSteps(s => [...s, { icon: 'ambulance', label: 'Ambulance Dispatch Pending', sub: 'Nearest unit being located', time: now(), done: false }]);
+          setLiveSteps(s => [...s, { icon: 'ambulance', label: 'Ambulance Dispatch Pending', sub: 'Nearest unit being located', time: now(), done: false, key: 'ambulance' }]);
         }
       } catch (_) {}
     }
 
-    const incId = localStorage.getItem('currentIncidentId') || 'demo-incident-uuid';
+    const incId = localStorage.getItem('currentIncidentId') || result.eventId || 'demo-incident-uuid';
     setIncidentId(incId);
 
     await new Promise(r => setTimeout(r, 400));
-    setLiveSteps(s => [...s, { icon: 'receipt_long', label: 'FIR Incident Report Auto-Created', sub: 'View triage dashboard for live updates', time: now(), done: true }]);
+    setLiveSteps(s => [...s, { icon: 'receipt_long', label: 'FIR Incident Report Auto-Created', sub: 'View triage dashboard for live updates', time: now(), done: true, key: 'incident' }]);
 
     setPhase('active');
+  };
+
+  const handleStepClick = (stepKey) => {
+    const activeIncId = incidentId || localStorage.getItem('currentIncidentId') || 'demo-incident-uuid';
+    if (stepKey === 'sms' || stepKey === 'contacts') {
+      const profile = (() => {
+        try { return JSON.parse(localStorage.getItem('medicalProfile') || '{}'); } catch (_) { return {}; }
+      })();
+      const allowedContacts = contacts.filter(c => c.allowed);
+      openSMSFallback(allowedContacts, coords, profile);
+      navigate('/ambulance');
+    } else if (stepKey === 'ambulance') {
+      navigate('/ambulance');
+    } else if (stepKey === 'incident') {
+      navigate(`/incident/${activeIncId}`);
+    }
   };
 
   const btn = {
@@ -342,7 +359,16 @@ export default function SOSButton() {
       {/* Food-delivery style step list */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
         {liveSteps.map((step, i) => (
-          <div key={i} style={{ display: 'flex', gap: 12, animation: 'slideInStep 0.4s ease', opacity: 1 }}>
+          <div
+            key={i}
+            onClick={() => handleStepClick(step.key)}
+            style={{
+              display: 'flex', gap: 12, animation: 'slideInStep 0.4s ease', opacity: 1,
+              cursor: step.key ? 'pointer' : 'default', padding: '4px 6px', borderRadius: 6,
+              transition: 'background 0.2s',
+            }}
+            title={step.key === 'sms' || step.key === 'contacts' ? 'Click to send SMS to emergency contacts & track ambulance' : step.key === 'ambulance' ? 'Click to view ambulance dispatch' : step.key === 'incident' ? 'Click to view incident report' : ''}
+          >
             {/* Left: icon + connector line */}
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 36, flexShrink: 0 }}>
               <div style={{

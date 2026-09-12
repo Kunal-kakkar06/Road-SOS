@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 from typing import List, Optional
 
 
@@ -215,5 +215,73 @@ class CrashSOSUpdate(BaseModel):
     eventId:       str
     sos_triggered: bool
     cancelled:     bool
+
+
+class UserRegister(BaseModel):
+    name: str
+    email: EmailStr
+    password: str
+    confirm_password: str
+
+
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
+
+
+class UserResponse(BaseModel):
+    id: str  # maps to User.uuid
+    email: str
+    name: str
+    role: str
+
+    class Config:
+        orm_mode = True
+
+
+class TokenResponse(BaseModel):
+    access_token: str
+    refresh_token: str
+    token_type: str = "bearer"
+    expires_in: int
+    user: UserResponse
+
+
+class RefreshTokenRequest(BaseModel):
+    refresh_token: str
+
+
+class UserRoleUpdate(BaseModel):
+    role: str
+
+
+class UserStatusUpdate(BaseModel):
+    is_active: bool
+
+
+class AdminUserResponse(BaseModel):
+    id: str  # maps to user uuid
+    email: str
+    name: str
+    role: str
+    is_active: bool
+    created_at: datetime
+
+    class Config:
+        orm_mode = True
+
+
+class SystemStatsResponse(BaseModel):
+    total_users: int
+    total_responders: int
+    active_users: int
+    sos_requests: int
+    ai_requests: int
+    hospital_searches: int
+
+
+class ResponderEmergencyStatusUpdate(BaseModel):
+    status: str
+    notes: Optional[str] = None
 
 

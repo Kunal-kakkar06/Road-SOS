@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import FirstAidIllustration from './FirstAidIllustration';
 import { 
   playInstructionAudio, 
   getDecisionTreeProgress, 
@@ -553,8 +554,8 @@ export default function VoiceGuidance({ onClose, initialInjury = "bleeding" }) {
                     </button>
                   </div>
 
-                  {/* Loopable First Aid Video player */}
-                  <div style={{ width: '100%', borderRadius: 16, overflow: 'hidden', background: '#000', border: '1px solid rgba(15,23,42,0.06)', boxShadow: '0 4px 16px rgba(0,0,0,0.04)' }}>
+                  {/* Procedural Step Illustration & Video Guide */}
+                  <div style={{ width: '100%', borderRadius: 16, overflow: 'hidden', border: '1px solid rgba(15,23,42,0.06)', boxShadow: '0 4px 16px rgba(0,0,0,0.04)' }}>
                     {activeVideoUrl ? (
                       <video
                         key={activeVideoUrl} 
@@ -566,16 +567,7 @@ export default function VoiceGuidance({ onClose, initialInjury = "bleeding" }) {
                         style={{ width: '100%', display: 'block', maxHeight: '180px', objectFit: 'cover' }}
                       />
                     ) : (
-                      <div style={{
-                        height: '140px', background: '#0f172a', display: 'flex', flexDirection: 'column',
-                        alignItems: 'center', justifyContent: 'center', gap: 8, padding: 16
-                      }}>
-                        <span className="material-symbols-outlined" style={{ fontSize: 32, color: '#fca311', animation: 'pulse 2s infinite' }}>medical_services</span>
-                        <p style={{ fontSize: 12, fontWeight: 800, color: '#fff', margin: 0, fontFamily: 'Space Grotesk, sans-serif' }}>
-                          CLINICAL PROCEDURAL GUIDE
-                        </p>
-                        <p style={{ fontSize: 10, color: '#94a3b8', margin: 0 }}>Voice Guidance is running successfully.</p>
-                      </div>
+                      <FirstAidIllustration stepText={steps[currentStepIndex]} category={currentNode} />
                     )}
                   </div>
                   

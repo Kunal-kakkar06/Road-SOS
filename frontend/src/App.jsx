@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
 import AppLayout from './components/AppLayout';
+import ProtectedRoute from './components/ProtectedRoute';
 
 // Lazy-load all pages for route-level code splitting
 const Home                = lazy(() => import('./pages/Home'));
@@ -16,6 +17,12 @@ const IncidentReportPage  = lazy(() => import('./pages/IncidentReportPage'));
 const FamilyTrackingPage  = lazy(() => import('./pages/FamilyTrackingPage'));
 const PreventionMapPage   = lazy(() => import('./pages/PreventionMapPage'));
 const AITriagePage        = lazy(() => import('./pages/AITriagePage'));
+const Login               = lazy(() => import('./pages/Login'));
+const Register            = lazy(() => import('./pages/Register'));
+const ForgotPassword      = lazy(() => import('./pages/ForgotPassword'));
+const AdminDashboard      = lazy(() => import('./pages/AdminDashboard'));
+const ResponderQueue      = lazy(() => import('./pages/ResponderQueue'));
+const AccessDenied        = lazy(() => import('./pages/AccessDenied'));
 
 function App() {
   return (
@@ -30,20 +37,43 @@ function App() {
         </div>
       }>
         <Routes>
-          <Route element={<AppLayout />}>
-            <Route path="/"                    element={<Home />} />
-            <Route path="/medical-profile"     element={<MedicalProfilePage />} />
-            <Route path="/digilocker/callback" element={<DigiLockerCallback />} />
-            <Route path="/map"                 element={<PreventionMapPage />} />
-            <Route path="/history"             element={<History />} />
-            <Route path="/hospital"            element={<Hospital />} />
-            <Route path="/first-aid"           element={<FirstAid />} />
-            <Route path="/ambulance"           element={<Ambulance />} />
-            <Route path="/incident/:incidentId" element={<IncidentReportPage />} />
-            <Route path="/triage"              element={<AITriagePage />} />
-          </Route>
-          <Route path="/mock-digilocker" element={<MockDigiLocker />} />
+          {/* Public Auth Routes */}
+          <Route path="/login"           element={<Login />} />
+          <Route path="/register"        element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+
+          {/* Public Tracking Page */}
           <Route path="/track/:sessionId" element={<FamilyTrackingPage />} />
+
+          {/* Protected Main Application Routes */}
+          <Route element={<ProtectedRoute />}>
+            <Route element={<AppLayout />}>
+              <Route path="/"                    element={<Home />} />
+              <Route path="/medical-profile"     element={<MedicalProfilePage />} />
+              <Route path="/digilocker/callback" element={<DigiLockerCallback />} />
+              <Route path="/map"                 element={<PreventionMapPage />} />
+              <Route path="/history"             element={<History />} />
+              <Route path="/hospital"            element={<Hospital />} />
+              <Route path="/first-aid"           element={<FirstAid />} />
+              <Route path="/ambulance"           element={<Ambulance />} />
+              <Route path="/incident/:incidentId" element={<IncidentReportPage />} />
+              <Route path="/triage"              element={<AITriagePage />} />
+
+              {/* Responder Routes */}
+              <Route element={<ProtectedRoute allowedRoles={['RESPONDER', 'ADMIN']} />}>
+                <Route path="/responder/queue" element={<ResponderQueue />} />
+              </Route>
+
+              {/* Admin Routes */}
+              <Route element={<ProtectedRoute allowedRoles={['ADMIN']} />}>
+                <Route path="/admin" element={<AdminDashboard />} />
+              </Route>
+            </Route>
+            <Route path="/mock-digilocker" element={<MockDigiLocker />} />
+          </Route>
+
+          {/* Access Denied Route */}
+          <Route path="/403" element={<AccessDenied />} />
         </Routes>
       </Suspense>
     </BrowserRouter>

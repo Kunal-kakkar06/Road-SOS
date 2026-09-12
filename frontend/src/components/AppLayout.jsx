@@ -72,20 +72,46 @@ export default function AppLayout() {
   useEffect(() => {
     const updateInitials = () => {
       try {
-        const cached = localStorage.getItem('medicalProfile');
-        if (cached) {
-          const profile = JSON.parse(cached);
+        const cachedProfile = localStorage.getItem('medicalProfile');
+        console.log("RoadSOS Initials Debug - cachedProfile:", cachedProfile);
+        if (cachedProfile) {
+          const profile = JSON.parse(cachedProfile);
           if (profile && profile.full_name) {
             const names = profile.full_name.trim().split(/\s+/);
             if (names.length > 1) {
               setInitials((names[0][0] + names[1][0]).toUpperCase());
+              return;
             } else if (names[0]) {
               setInitials(names[0].substring(0, 2).toUpperCase());
+              return;
             }
-            return;
           }
         }
-      } catch (_) {}
+      } catch (err) {
+        console.error("RoadSOS Initials Debug - profile error:", err);
+      }
+
+      try {
+        const cachedUser = localStorage.getItem('user');
+        console.log("RoadSOS Initials Debug - cachedUser:", cachedUser);
+        if (cachedUser) {
+          const userObj = JSON.parse(cachedUser);
+          if (userObj && userObj.name) {
+            const names = userObj.name.trim().split(/\s+/);
+            if (names.length > 1) {
+              setInitials((names[0][0] + names[1][0]).toUpperCase());
+              return;
+            } else if (names[0]) {
+              setInitials(names[0].substring(0, 2).toUpperCase());
+              return;
+            }
+          }
+        }
+      } catch (err) {
+        console.error("RoadSOS Initials Debug - user error:", err);
+      }
+
+      console.log("RoadSOS Initials Debug - falling back to AK");
       setInitials('AK');
     };
 
@@ -110,6 +136,24 @@ export default function AppLayout() {
             <NavLink to="/map" className="dash-nav-link">Live Map</NavLink>
             <NavLink to="/history" className="dash-nav-link">History</NavLink>
             <NavLink to="/medical-profile" className="dash-nav-link">Medical ID</NavLink>
+            {(() => {
+              try {
+                const cachedUser = localStorage.getItem('user');
+                const user = cachedUser ? JSON.parse(cachedUser) : null;
+                if (user?.role === 'RESPONDER') {
+                  return <NavLink to="/responder/queue" className="dash-nav-link">Emergency Queue</NavLink>;
+                }
+                if (user?.role === 'ADMIN') {
+                  return (
+                    <>
+                      <NavLink to="/responder/queue" className="dash-nav-link">Emergency Queue</NavLink>
+                      <NavLink to="/admin" className="dash-nav-link">Admin Dashboard</NavLink>
+                    </>
+                  );
+                }
+              } catch (_) {}
+              return null;
+            })()}
           </nav>
           
           {/* Location Selector Dropdown */}
@@ -141,10 +185,21 @@ export default function AppLayout() {
           <button 
             className="anti-gravity-toggle"
             onClick={() => setShowAntiGravity(true)}
-            style={{background:'none', border:'none', cursor:'pointer', display:'flex', alignItems:'center', gap:8}}
+            style={{
+              background: '#fca311',
+              border: '2px solid #e08e00',
+              boxShadow: '0 2px 6px rgba(252, 163, 17, 0.35)',
+              borderRadius: 20,
+              padding: '6px 14px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              transition: 'all 0.2s'
+            }}
           >
-            <span className="material-symbols-outlined" style={{fontSize:24, color:'#fca311'}}>paragliding</span>
-            <span style={{fontFamily:'Space Grotesk,sans-serif', fontWeight:700, color:'#fff'}}>Anti-Gravity</span>
+            <span className="material-symbols-outlined icon-fill" style={{fontSize: 20, color: '#14213D'}}>paragliding</span>
+            <span style={{fontFamily: 'Space Grotesk, sans-serif', fontWeight: 900, color: '#14213D', fontSize: 13, letterSpacing: '0.3px'}}>Fall Detection</span>
           </button>
           <div style={{
             fontSize:11,fontWeight:600,
@@ -158,7 +213,13 @@ export default function AppLayout() {
           }}>
             {sensorOn ? '● Crash Sensor Active' : '○ Manual Only'}
           </div>
-          <div className="dash-avatar">
+          <div className="dash-avatar" style={{ cursor: 'pointer' }} onClick={() => {
+            if (window.confirm('Do you want to log out of RoadSOS?')) {
+              import('../services/authService').then(m => m.logout()).then(() => {
+                window.location.href = '/login';
+              });
+            }
+          }} title="Click to Log Out">
             <span>{initials}</span>
           </div>
         </div>
@@ -203,6 +264,35 @@ export default function AppLayout() {
           <span className="material-symbols-outlined" style={{fontSize:24}}>person</span>
           <span className="nav-label">Profile</span>
         </NavLink>
+        {(() => {
+          try {
+            const cachedUser = localStorage.getItem('user');
+            const user = cachedUser ? JSON.parse(cachedUser) : null;
+            if (user?.role === 'RESPONDER') {
+              return (
+                <NavLink to="/responder/queue" className={({isActive}) => `bottom-nav-item ${isActive ? 'active' : ''}`}>
+                  <span className="material-symbols-outlined" style={{fontSize:24}}>emergency</span>
+                  <span className="nav-label">Queue</span>
+                </NavLink>
+              );
+            }
+            if (user?.role === 'ADMIN') {
+              return (
+                <>
+                  <NavLink to="/responder/queue" className={({isActive}) => `bottom-nav-item ${isActive ? 'active' : ''}`}>
+                    <span className="material-symbols-outlined" style={{fontSize:24}}>emergency</span>
+                    <span className="nav-label">Queue</span>
+                  </NavLink>
+                  <NavLink to="/admin" className={({isActive}) => `bottom-nav-item ${isActive ? 'active' : ''}`}>
+                    <span className="material-symbols-outlined" style={{fontSize:24}}>admin_panel_settings</span>
+                    <span className="nav-label">Admin</span>
+                  </NavLink>
+                </>
+              );
+            }
+          } catch (_) {}
+          return null;
+        })()}
       </nav>
 
       {/* Manual report button — floating above mobile tabbar */}

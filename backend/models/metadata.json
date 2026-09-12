@@ -1,0 +1,31 @@
+{
+  "model_version": "1.1.0",
+  "feature_version": "1.0",
+  "training_dataset_type": "synthetic",
+  "training_sample_count": 5000,
+  "training_random_seed": 42,
+  "trained_at": "2026-09-05T08:46:47.288026+00:00",
+  "feature_names": [
+    "image_score",
+    "nlp_score",
+    "sensor_score",
+    "medical_risk",
+    "has_image",
+    "has_nlp",
+    "has_sensor",
+    "mean_signal",
+    "max_signal",
+    "signal_count"
+  ],
+  "class_names": [
+    "CRITICAL",
+    "HIGH",
+    "MODERATE",
+    "LOW"
+  ],
+  "metrics": {
+    "test_accuracy": 0.76,
+    "test_macro_f1": 0.7590869455584116,
+    "test_weighted_f1": 0.7594279430713283
+  }
+}

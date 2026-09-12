@@ -31,8 +31,8 @@ export default function Home() {
       });
 
       // Sleek Light Map Voyager tiles for premium Bento theme integration
-      window.L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-        maxZoom: 20
+      window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19
       }).addTo(map);
 
       mapInstanceRef.current = map;
@@ -179,7 +179,7 @@ export default function Home() {
                 {!isOnline && <span style={{position:'absolute',top:4,right:6,fontSize:8,background:'#ba1a1a',color:'#fff',padding:'2px 4px',borderRadius:4,fontWeight:800}}>SMS</span>}
               </Link>
               <Link to="/map" className="quick-action-item">
-                <span className="material-symbols-outlined" style={{fontSize:28, color: '#27AE60'}}>shield_heart</span>
+                <span className="material-symbols-outlined" style={{fontSize:28}}>map</span>
                 <span className="quick-action-item-label">Safety Map</span>
               </Link>
               <Link to="/incident/demo-incident-uuid" className="quick-action-item">

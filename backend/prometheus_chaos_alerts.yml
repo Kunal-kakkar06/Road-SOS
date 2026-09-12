@@ -1,0 +1,47 @@
+groups:
+  - name: roadsos_chaos_alerts
+    rules:
+      - alert: RoadSOS_Combined_API_And_Worker_Degradation
+        expr: (up{job="roadsos-api"} == 0) and (worker_nodes_active < 2)
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Simultaneous API and Worker Fleet Degradation"
+          description: "Both API service and worker fleet are degraded under combined fault conditions."
+
+      - alert: RoadSOS_Backlog_Drain_Stalled
+        expr: (triage_jobs_total{status="pending"} > 30) and (rate(worker_jobs_processed_total[2m]) == 0)
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Queue Backlog Drainage Stalled"
+          description: "Pending queue backlog > 30 jobs but worker processing rate is 0 jobs/sec."
+
+      - alert: RoadSOS_Database_Connection_Pool_Exhaustion
+        expr: increase(database_connection_failures_total[2m]) > 5
+        for: 0m
+        labels:
+          severity: critical
+        annotations:
+          summary: "PostgreSQL Connection Pool Exhausted"
+          description: "Rapid increase in database connection failures under high load."
+
+      - alert: RoadSOS_Backup_During_Load_Failure
+        expr: disaster_recovery_backup_failures_total > 0
+        for: 0m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Backup Execution Failed During High Load"
+          description: "Backup execution triggered during peak load encountered an error."
+
+      - alert: RoadSOS_Chaos_SLO_Latency_Breach
+        expr: disaster_recovery_oldest_pending_job_age_seconds > 120
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Chaos Incident Job Age SLO Breach (>120s)"
+          description: "Pending job age exceeded 120 seconds during chaos fault injection."

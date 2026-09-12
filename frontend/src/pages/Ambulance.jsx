@@ -58,6 +58,11 @@ export default function Ambulance() {
         severity: 3,
       });
       setDispatch(result);
+      if (result.driver_lat && result.driver_lng) {
+        setDriverPos({ lat: result.driver_lat, lng: result.driver_lng });
+      } else {
+        setDriverPos({ lat: coords.lat + 0.015, lng: coords.lng + 0.015 });
+      }
     } catch (e) {
       setError(e.message || 'Dispatch failed — call 108 directly');
     }
@@ -70,7 +75,7 @@ export default function Ambulance() {
 
   // ══════════════ ACTIVE DISPATCH VIEW ══════════════
   if (dispatch) {
-    const amb = dispatch.assigned_ambulance || {};
+    const amb = dispatch.assigned_ambulance || dispatch;
     return (
       <div className="fade-in" style={{ paddingBottom: 32 }}>
         {/* Header */}

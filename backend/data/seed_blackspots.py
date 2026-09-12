@@ -20,9 +20,7 @@ SPOTS = [
 ]
 
 async def seed():
-    # Make sure all tables are created on startup first
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    # Database schema is now managed by Alembic.
 
     # Detect SQLite
     is_sqlite = "sqlite" in os.getenv("DATABASE_URL", "")

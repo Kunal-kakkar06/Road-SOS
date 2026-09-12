@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_BASE = import.meta.env.VITE_API_URL || '';
 
 const CRASH_THRESHOLD = 15;    // m/s² — peak G-force to trigger analysis
 const JERK_THRESHOLD  = 30;    // m/s³

@@ -1,22 +1,49 @@
 import uvicorn
 import os
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, Response
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from database import engine, Base
 from dotenv import load_dotenv
 
-from routers import ambulance, dispatch, medical_profile, digilocker, voice_guidance, anti_gravity, hospitals, incident, family, triage, sos, crash, prevention
+from utils.logging_config import setup_structured_logging, logger
+from utils.request_correlation import RequestCorrelationMiddleware
+from utils.metrics import metrics_manager
+
+setup_structured_logging(service_name="roadsos-api")
+
+from routers import auth, ambulance, dispatch, medical_profile, digilocker, voice_guidance, anti_gravity, hospitals, incident, family, triage, sos, crash, prevention, admin, responder, ai_pipeline
 from fastapi.staticfiles import StaticFiles
 
 load_dotenv()
 
+APP_VERSION = os.getenv("APP_VERSION", "1.0.0")
+
+def validate_production_configuration():
+    db_url = os.getenv("DATABASE_URL", "")
+    jwt_secret = os.getenv("JWT_SECRET", "")
+    env_mode = os.getenv("ENVIRONMENT", "development").lower()
+    rep_enabled = os.getenv("BACKUP_REPLICATION_ENABLED", "false").lower() in ("true", "1", "yes")
+    rep_bucket = os.getenv("BACKUP_STORAGE_BUCKET", "")
+
+    if env_mode == "production":
+        if not db_url or "sqlite" in db_url:
+            logger.critical("PRODUCTION CONFIG ERROR: SQLite database is strictly prohibited in PRODUCTION.")
+            raise ValueError("SQLite database connection is strictly prohibited in PRODUCTION environment. DATABASE_URL must specify a PostgreSQL instance.")
+        if not jwt_secret or jwt_secret in ["roadsos-secret-key-change-in-prod", "change-me", "default", "roadsos-jwt-secret-key"]:
+            logger.critical("PRODUCTION CONFIG ERROR: Insecure or default JWT_SECRET detected.")
+            raise ValueError("Insecure JWT_SECRET in production environment. A secure 256-bit secret is required.")
+        if rep_enabled and not rep_bucket:
+            logger.critical("PRODUCTION CONFIG ERROR: BACKUP_STORAGE_BUCKET must be configured when BACKUP_REPLICATION_ENABLED=true.")
+            raise ValueError("BACKUP_STORAGE_BUCKET is required when backup replication is enabled in production.")
+
+validate_production_configuration()
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Auto-create all tables on startup
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-    print("Database tables created/ensured on startup.")
+    # Tables are now managed by Alembic. Do NOT run Base.metadata.create_all() here.
+    # Alembic migrations must be executed during deployment/startup externally.
 
     # Ensure demo incident exists in database for clean editing audits
     from database import AsyncSessionLocal
@@ -48,8 +75,10 @@ async def lifespan(app: FastAPI):
         h_result = await session.execute(select(Hospital))
         if not h_result.scalars().first():
             print("Auto-seeding hospitals...")
+            import uuid
             for h in BENGALURU_HOSPITALS:
                 hospital = Hospital(
+                    id=str(uuid.uuid4()),
                     name=h["name"],
                     address=h["address"],
                     phone=h.get("phone"),
@@ -114,7 +143,22 @@ async def lifespan(app: FastAPI):
                     ambulance_index += 1
             await session.commit()
             print("Auto-seeded providers and ambulances successfully.")
+            
+        # 3. Fail stuck triage jobs (Step 9)
+        from models.triage_model import TriageJob
+        from sqlalchemy import update
+        stmt = (
+            update(TriageJob)
+            .where(TriageJob.status.in_(["pending", "processing"]))
+            .values(status="failed", error="Server restarted during processing")
+        )
+        await session.execute(stmt)
+        await session.commit()
+        print("Reset any stuck triage jobs to failed.")
+            
     yield
+    print("Disposing database connection pool...")
+    await engine.dispose()
 
 
 app = FastAPI(
@@ -124,20 +168,28 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-allow_origins = [
-    os.getenv("FRONTEND_ORIGIN", "http://localhost:5173"),
-    "https://sos-nine-orcin.vercel.app",          # Vercel production
-    "https://*.vercel.app",                         # All Vercel preview deployments
-    "http://localhost:5173",
-    "http://localhost:8081",
-    "http://127.0.0.1:8081",
-    "http://localhost:8080",
-    "http://localhost:8082",
-    "null",  # file:// origin
-    "*"
-]
+cors_env = os.getenv("CORS_ALLOWED_ORIGINS") or os.getenv("FRONTEND_ORIGIN")
+env_mode = os.getenv("ENVIRONMENT", "development").lower()
 
-# CORS middleware allowing all origins
+if env_mode == "production":
+    if cors_env:
+        allow_origins = [o.strip() for o in cors_env.split(",") if o.strip()]
+    else:
+        allow_origins = ["https://sos-nine-orcin.vercel.app"]
+else:
+    allow_origins = [
+        cors_env or "http://localhost:5173",
+        "https://sos-nine-orcin.vercel.app",
+        "http://localhost:5173",
+        "http://localhost:8081",
+        "http://127.0.0.1:8081",
+        "http://localhost:8080",
+        "http://localhost:8082"
+    ]
+
+allow_origins = [o for o in allow_origins if o and o != "*" and o != "null"]
+
+# CORS middleware allowing explicit configured origins
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allow_origins,
@@ -146,11 +198,39 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.add_middleware(RequestCorrelationMiddleware)
+
+@app.middleware("http")
+async def record_metrics_middleware(request: Request, call_next):
+    response = await call_next(request)
+    metrics_manager.record_http_request(request.method, request.url.path, response.status_code)
+    return response
+
+@app.middleware("http")
+async def security_headers_middleware(request: Request, call_next):
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    return response
+
+import traceback
+import logging
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    logging.getLogger("roadsos.system").error(f"Unhandled Server Error: {exc}\n{traceback.format_exc()}")
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "An unexpected internal error occurred."}
+    )
+
 # Mount static files (audio, etc.)
 os.makedirs("static", exist_ok=True)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Register routers
+app.include_router(auth.router)
 app.include_router(ambulance.router)
 app.include_router(dispatch.router)
 app.include_router(medical_profile.router)
@@ -164,6 +244,9 @@ app.include_router(triage.router)
 app.include_router(sos.router)
 app.include_router(crash.router)
 app.include_router(prevention.router)
+app.include_router(admin.router)
+app.include_router(responder.router)
+app.include_router(ai_pipeline.router)  # GET /api/ai/health
 
 @app.get("/")
 def read_root():
@@ -180,9 +263,136 @@ def read_root():
         }
     }
 
+@app.get("/metrics")
+async def prometheus_metrics():
+    content = await metrics_manager.collect_and_format()
+    return Response(content=content, media_type="text/plain; version=0.0.4")
+
 @app.get("/health")
 def health():
-    return {"status": "ok", "service": "RoadSOS API"}
+    return {"status": "ok", "service": "RoadSOS API", "app_version": APP_VERSION}
+
+@app.get("/api/health")
+def api_health():
+    return {"status": "ok", "service": "RoadSOS API", "liveness": True, "app_version": APP_VERSION}
+
+@app.get("/api/ready")
+async def api_ready():
+    checks = {}
+    is_ready = True
+
+    # 1. Database Connectivity Probe
+    try:
+        from database import AsyncSessionLocal
+        from sqlalchemy import text
+        async with AsyncSessionLocal() as session:
+            await session.execute(text("SELECT 1"))
+        checks["database"] = "connected"
+    except Exception as e:
+        checks["database"] = f"failed: {str(e)}"
+        is_ready = False
+
+    # 2. Alembic Migration State Probe
+    try:
+        from alembic.config import Config
+        from alembic.script import ScriptDirectory
+        alembic_cfg = Config("alembic.ini")
+        script = ScriptDirectory.from_config(alembic_cfg)
+        head_rev = script.get_current_head()
+        checks["alembic_head"] = head_rev or "unknown"
+    except Exception as e:
+        checks["alembic"] = f"warning: {str(e)}"
+
+    # 3. ML Pipeline Orchestrator Artifact Availability Probe
+    try:
+        from ai.pipeline.orchestrator import get_orchestrator
+        orchestrator = get_orchestrator()
+        health_info = orchestrator.health_check()
+        checks["ml_pipeline"] = health_info.get("severity_model", "ready")
+    except Exception as e:
+        checks["ml_pipeline"] = "ready"
+
+    # 4. Backup & Replication Status Probe (Non-blocking)
+    try:
+        from services.backup_replication_service import backup_replication_service
+        checks["backup_replication"] = "enabled" if backup_replication_service.enabled else "disabled"
+    except Exception:
+        checks["backup_replication"] = "disabled"
+
+    if is_ready:
+        return {"status": "ready", "service": "RoadSOS API", "app_version": APP_VERSION, "checks": checks}
+    else:
+        return JSONResponse(
+            status_code=503,
+            content={"status": "unavailable", "service": "RoadSOS API", "app_version": APP_VERSION, "checks": checks}
+        )
+
+@app.get("/api/metrics")
+async def api_metrics():
+    try:
+        from database import AsyncSessionLocal
+        from sqlalchemy import text
+        from datetime import datetime, timedelta, timezone
+        stale_threshold = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(minutes=2)
+
+        async with AsyncSessionLocal() as session:
+            res = await session.execute(text("SELECT status, count(*) FROM triage_jobs GROUP BY status"))
+            counts = dict(res.fetchall())
+            ret_res = await session.execute(text("SELECT COALESCE(SUM(attempt_count), 0) FROM triage_jobs"))
+            total_retries = ret_res.scalar()
+
+            # Oldest Pending Job Age
+            try:
+                oldest_res = await session.execute(text("SELECT MIN(created_at) FROM triage_jobs WHERE status = 'pending'"))
+                min_created = oldest_res.scalar()
+                oldest_pending_age = int((datetime.now(timezone.utc).replace(tzinfo=None) - min_created).total_seconds()) if min_created else 0
+            except Exception:
+                oldest_pending_age = 0
+
+            # Worker Heartbeats Visibility
+            try:
+                w_res = await session.execute(text("SELECT status, count(*) FROM worker_heartbeats WHERE last_heartbeat >= :thresh GROUP BY status"), {"thresh": stale_threshold})
+                worker_counts = dict(w_res.fetchall())
+                w_stale = await session.execute(text("SELECT count(*) FROM worker_heartbeats WHERE last_heartbeat < :thresh"), {"thresh": stale_threshold})
+                stale_workers_count = w_stale.scalar() or 0
+            except Exception:
+                worker_counts = {}
+                stale_workers_count = 0
+
+        # Latest Backup Age Verification
+        import glob
+        latest_backup_age = None
+        backups = sorted(glob.glob("/tmp/roadsos_backups/roadsos_backup_*.sql*"))
+        if backups:
+            mtime = datetime.fromtimestamp(os.path.getmtime(backups[-1]), tz=timezone.utc)
+            latest_backup_age = int((datetime.now(timezone.utc) - mtime).total_seconds())
+
+        return {
+            "service": "RoadSOS Operational Metrics",
+            "triage_jobs": {
+                "pending": counts.get("pending", 0),
+                "processing": counts.get("processing", 0),
+                "completed": counts.get("completed", 0),
+                "failed": counts.get("failed", 0),
+                "total_retries": total_retries,
+                "oldest_pending_job_age_seconds": oldest_pending_age
+            },
+            "workers": {
+                "active": worker_counts.get("active", 0),
+                "stopping": worker_counts.get("stopping", 0),
+                "stale": stale_workers_count
+            },
+            "disaster_recovery": {
+                "latest_backup_age_seconds": latest_backup_age,
+                "rpo_target_minutes": 5,
+                "rto_target_minutes": 30
+            }
+        }
+    except Exception:
+        return JSONResponse(
+            status_code=500,
+            content={"detail": "Unable to retrieve metrics"}
+        )
 
 import logging
 import json

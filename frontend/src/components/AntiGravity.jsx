@@ -76,7 +76,7 @@ export default function AntiGravity({ onClose }) {
 
   const simulateFall = () => {
     if (!isEnabled) {
-      alert("Please enable Anti-Gravity first");
+      alert("Please enable Fall Detection first");
       return;
     }
     handleFallDetected(6.5); // Simulate 6.5G impact
@@ -96,7 +96,7 @@ export default function AntiGravity({ onClose }) {
   return (
     <div style={{position: 'fixed', inset: 0, zIndex: 10000, background: '#f8f9fa', overflowY: 'auto'}}>
       <div style={{background: '#14213D', color: '#fff', padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontWeight: 700, fontSize: 18}}>
-        <span>🪂 Anti-Gravity (Fall Detection)</span>
+        <span>🪂 Fall Detection</span>
         <span className="material-symbols-outlined" style={{cursor:'pointer'}} onClick={onClose}>close</span>
       </div>
 

@@ -30,10 +30,7 @@ locations = [
 ]
 
 async def seed_data():
-    async with engine.begin() as conn:
-        # Auto-create all tables
-        await conn.run_sync(Base.metadata.create_all)
-        print("Ensured all database tables exist.")
+    # Database schema is now managed by Alembic.
 
     async with AsyncSessionLocal() as db:
         # Check if providers already exist to prevent duplicate seedings

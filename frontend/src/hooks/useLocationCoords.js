@@ -40,21 +40,33 @@ export default function useLocationCoords() {
 
       setLocationType('gps');
       if (navigator.geolocation) {
+        // 1. Get instant position first for fast resolution
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+            setGpsError(null);
+          },
+          (err) => {
+            console.warn('GPS initial position error:', err);
+            setGpsError('Location access denied or unavailable. Enable GPS permission for accurate results.');
+          },
+          { enableHighAccuracy: true, timeout: 5000, maximumAge: 30000 }
+        );
+
+        // 2. Watch position for continuous updates
         watchId = navigator.geolocation.watchPosition(
           (pos) => {
             setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
             setGpsError(null);
           },
           (err) => {
-            console.warn('GPS error, using default Bangalore fallback', err);
+            console.warn('GPS watch error:', err);
             setGpsError('Location access denied or unavailable. Enable GPS permission for accurate results.');
-            setCoords({ lat: 12.9716, lng: 77.5946 });
           },
-          { enableHighAccuracy: true, timeout: 10000 }
+          { enableHighAccuracy: true, timeout: 10000, maximumAge: 10000 }
         );
       } else {
         setGpsError('Geolocation is not supported by your browser');
-        setCoords({ lat: 12.9716, lng: 77.5946 });
       }
     };
 

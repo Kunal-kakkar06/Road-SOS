@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { submitTriage, uploadTriageImage, uploadTriageVoice } from '../services/triageService';
+import { submitAsyncTriage, getTriageJobStatus, uploadTriageImage, uploadTriageVoice } from '../services/triageService';
 import { triggerSOS } from '../services/offlineSOS';
 
 export default function TriageAssistant({ isOpen, onClose, onStartVoiceGuidance }) {
@@ -14,6 +14,7 @@ export default function TriageAssistant({ isOpen, onClose, onStartVoiceGuidance 
 
   // UI States
   const [loading, setLoading] = useState(false);
+  const [pollingStatus, setPollingStatus] = useState('');
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [isRecordingVoice, setIsRecordingVoice] = useState(false);
   const [recordingSeconds, setRecordingSeconds] = useState(0);
@@ -41,6 +42,7 @@ export default function TriageAssistant({ isOpen, onClose, onStartVoiceGuidance 
     setError(null);
     setShowSosConfirm(false);
     setSosTriggeredStatus(null);
+    setPollingStatus('');
   };
 
   // Cleanup timers
@@ -48,8 +50,11 @@ export default function TriageAssistant({ isOpen, onClose, onStartVoiceGuidance 
     return () => {
       if (recordingIntervalRef.current) clearInterval(recordingIntervalRef.current);
       if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
+      if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
     };
   }, []);
+
+  const pollingIntervalRef = useRef(null);
 
   // Handle Voice Record Mock
   const handleRecordVoice = async () => {
@@ -101,6 +106,7 @@ export default function TriageAssistant({ isOpen, onClose, onStartVoiceGuidance 
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setPollingStatus('Submitting...');
 
     const payload = {
       age: age ? parseInt(age, 10) : null,
@@ -113,19 +119,51 @@ export default function TriageAssistant({ isOpen, onClose, onStartVoiceGuidance 
     };
 
     try {
-      const data = await submitTriage(payload);
-      setResult(data);
+      const { job_id } = await submitAsyncTriage(payload);
+      setPollingStatus('Processing...');
 
-      // Check if critical for SOS auto-trigger
-      if (data.severity_level === 'Critical') {
-        setShowSosConfirm(true);
-        setSosCountdown(5);
-        startSosCountdown(data.assessment);
-      }
+      let attempts = 0;
+      const maxAttempts = 30; // 30 seconds max polling
+
+      pollingIntervalRef.current = setInterval(async () => {
+        attempts++;
+        if (attempts >= maxAttempts) {
+          clearInterval(pollingIntervalRef.current);
+          setLoading(false);
+          setPollingStatus('');
+          setError('Triage assessment timed out. Please try again.');
+          return;
+        }
+
+        try {
+          const statusRes = await getTriageJobStatus(job_id);
+          if (statusRes.status === 'completed') {
+            clearInterval(pollingIntervalRef.current);
+            setResult(statusRes.result);
+            setLoading(false);
+            setPollingStatus('');
+
+            if (statusRes.result.severity_level === 'Critical') {
+              setShowSosConfirm(true);
+              setSosCountdown(5);
+              startSosCountdown(statusRes.result.assessment);
+            }
+          } else if (statusRes.status === 'failed') {
+            clearInterval(pollingIntervalRef.current);
+            setLoading(false);
+            setPollingStatus('');
+            setError(statusRes.error || 'Triage processing failed.');
+          }
+        } catch (pollErr) {
+          console.warn("Polling error:", pollErr);
+          // Don't fail immediately on network blips, keep trying until maxAttempts
+        }
+      }, 1000);
+
     } catch (err) {
       setError(err.message || 'Something went wrong. Please check your network.');
-    } finally {
       setLoading(false);
+      setPollingStatus('');
     }
   };
 
@@ -391,7 +429,7 @@ export default function TriageAssistant({ isOpen, onClose, onStartVoiceGuidance 
           {loading && (
             <div style={loadingContainer}>
               <div style={spinnerStyle}></div>
-              <p style={{ fontWeight: 600, margin: '16px 0 4px' }}>Analyzing Medical Telemetry...</p>
+              <p style={{ fontWeight: 600, margin: '16px 0 4px' }}>{pollingStatus || 'Analyzing Medical Telemetry...'}</p>
               <p style={{ fontSize: 12, color: '#a0aab2' }}>Claude Clinical Model evaluating severity indicators</p>
             </div>
           )}

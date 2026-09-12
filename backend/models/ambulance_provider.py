@@ -8,10 +8,7 @@ from database import Base
 class AmbulanceProvider(Base):
     __tablename__ = "ambulance_providers"
 
-    if "sqlite" in os.getenv("DATABASE_URL", ""):
-        id              = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    else:
-        id              = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id              = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
 
     name             = Column(String,  nullable=False)
     operator_name    = Column(String,  nullable=True)   # driver name

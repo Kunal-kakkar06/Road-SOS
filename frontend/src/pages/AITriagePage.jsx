@@ -4,7 +4,7 @@ import { runTriage } from '../services/triageService';
 import SeverityResult from '../components/SeverityResult';
 import PhotoCapture   from '../components/PhotoCapture';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_BASE = import.meta.env.VITE_API_URL || '';
 
 /* ── Shared card style ─────────────────────────────────────── */
 const card = {

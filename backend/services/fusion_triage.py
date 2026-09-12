@@ -18,6 +18,7 @@ MODEL_PATH = Path(__file__).parent.parent / "models" / "fusion_triage.pkl"
 
 _model     = None
 _explainer = None
+_model_load_error = None
 
 # ── Severity maps ──────────────────────────────────────────────
 SEVERITY_MAP = {0: "P1", 1: "P2", 2: "P3", 3: "P4"}
@@ -43,7 +44,7 @@ FEATURE_NAMES = [
 
 def get_model():
     """Lazy-load XGBoost model + SHAP TreeExplainer."""
-    global _model, _explainer
+    global _model, _explainer, _model_load_error
     if _model is None:
         if MODEL_PATH.exists():
             try:
@@ -51,16 +52,22 @@ def get_model():
                 _model     = joblib.load(MODEL_PATH)
                 _explainer = shap.TreeExplainer(_model)
                 logger.info("[FusionTriage] Model loaded from %s", MODEL_PATH)
+                _model_load_error = None
             except Exception as exc:
                 logger.error("[FusionTriage] Failed to load model: %s", exc)
                 _model = False          # mark as disabled
+                _model_load_error = f"Model exists but dependency initialization failed: {exc}"
         else:
             logger.warning(
                 "[FusionTriage] %s not found — using rule-based fallback. "
                 "Run backend/data/train_fusion_model.py first.", MODEL_PATH
             )
             _model = False
+            _model_load_error = f"Model file not found at {MODEL_PATH}"
     return (_model, _explainer) if _model is not False else (None, None)
+
+def get_model_error():
+    return _model_load_error
 
 
 def _build_features(img: float, nlp: float, sen: float,
@@ -80,7 +87,12 @@ def _extract_shap(shap_vals, sev_idx: int, feature_vals: np.ndarray) -> List[Dic
         if isinstance(shap_vals, list):
             sv = shap_vals[sev_idx][0]
         else:
-            sv = shap_vals[sev_idx][0] if shap_vals.ndim == 3 else shap_vals[0]
+            # For XGBoost multi-class, shap_vals is usually (samples, features, classes)
+            if shap_vals.ndim == 3:
+                sv = shap_vals[0, :, sev_idx]
+            else:
+                sv = shap_vals[0]
+
 
         sorted_idx = np.argsort(np.abs(sv))[::-1]
         factors    = []
@@ -96,6 +108,7 @@ def _extract_shap(shap_vals, sev_idx: int, feature_vals: np.ndarray) -> List[Dic
             })
         return factors
     except Exception as exc:
+        print("[SHAP Debug] Could not extract factors:", type(exc), exc)
         logger.debug("[SHAP] Could not extract factors: %s", exc)
         return []
 
@@ -132,7 +145,12 @@ def _rule_based_fusion(img, nlp, sen, has_img, has_nlp, has_sen) -> Dict:
         "severity_color": SEV_COLOR[sev],
         "confidence":     round(mean, 3),
         "probabilities":  {},
-        "shap_factors":   [{"label": "Rule-based estimate — XGBoost model not loaded"}],
+        "shap_factors":   [{
+            "feature": "rule_based",
+            "impact": 1.0,
+            "direction": "increases",
+            "label": "Rule-based estimate — XGBoost model not loaded"
+        }],
         "signals_used":   {
             "image":  bool(has_img),
             "nlp":    bool(has_nlp),

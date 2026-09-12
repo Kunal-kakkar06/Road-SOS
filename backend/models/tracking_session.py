@@ -13,7 +13,7 @@ class TrackingSession(Base):
     """
     __tablename__ = "tracking_sessions"
 
-    id              = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id              = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     session_id      = Column(String, unique=True, nullable=False, index=True)
     sos_event_id    = Column(String, nullable=True)
     incident_id     = Column(String, nullable=True)

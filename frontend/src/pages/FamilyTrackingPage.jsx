@@ -9,7 +9,7 @@ const SEV_STYLE = {
   P4:{bg:'#27AE60',text:'#fff',label:'MINOR'},
 };
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_BASE = import.meta.env.VITE_API_URL || '';
 
 export default function FamilyTrackingPage() {
   const { sessionId }  = useParams();

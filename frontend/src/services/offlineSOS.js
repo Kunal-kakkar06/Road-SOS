@@ -1,7 +1,7 @@
 // ── IndexedDB helpers ────────────────────────────────────────
 import { sendFamilyAlert } from './familyAlertService';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_BASE = import.meta.env.VITE_API_URL || '';
 
 const DB_NAME   = 'roadsos-db';
 const QUEUE_KEY = 'sos-queue';
@@ -96,16 +96,31 @@ const requestBgSync = async () => {
 
 // ── Mobile SMS fallback (opens native SMS app) ───────────────
 export const openSMSFallback = (contacts, coords, profile) => {
-  const mapsUrl = `https://maps.google.com/?q=${coords.lat},${coords.lng}`;
+  const p = profile || (() => {
+    try { return JSON.parse(localStorage.getItem('medicalProfile') || '{}'); } catch (_) { return {}; }
+  })();
+  const cList = (contacts && contacts.length) ? contacts : (p.emergency_contacts || JSON.parse(localStorage.getItem('emergencyContacts') || '[]'));
+  const coordsObj = coords || { lat: 12.9716, lng: 77.5946 };
+  const mapsUrl = `https://maps.google.com/?q=${coordsObj.lat},${coordsObj.lng}`;
   const body = [
-    '🚨 ROADSOS EMERGENCY',
-    `${profile.name || 'Someone'} needs help!`,
+    '🚨 ROADSOS EMERGENCY ALERT',
+    `${p.full_name || p.name || 'Emergency Contact'} needs immediate assistance!`,
     `Location: ${mapsUrl}`,
-    `Blood type: ${profile.bloodType || 'Unknown'}`,
-    `Allergies: ${profile.allergies?.join(', ') || 'None'}`,
+    `Blood Type: ${p.blood_type || p.bloodType || 'Unknown'}`,
+    `Allergies: ${Array.isArray(p.allergies) ? p.allergies.join(', ') : 'None'}`,
+    `Medical Notes: ${Array.isArray(p.conditions) ? p.conditions.join(', ') : 'None'}`,
   ].join('\n');
 
-  const phones  = contacts.map((c) => c.phone).join(',');
+  const phones = cList
+    .map((c) => c.phone || c.contact_number || c.number)
+    .filter(Boolean)
+    .join(',');
+
+  if (!phones) {
+    console.warn('[SMS Fallback] No emergency phone numbers found');
+    return;
+  }
+
   const encoded = encodeURIComponent(body);
   const isIOS   = /iPad|iPhone|iPod/.test(navigator.userAgent);
   const sep     = isIOS ? '&' : '?';

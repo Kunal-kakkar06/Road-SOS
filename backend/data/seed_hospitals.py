@@ -69,12 +69,7 @@ BENGALURU_HOSPITALS = [
 ]
 
 async def seed():
-    # Make sure tables are created
-    async with engine.begin() as conn:
-        try:
-            await conn.run_sync(Base.metadata.create_all)
-        except Exception as e:
-            print(f"Metadata creation warning (normal if SQLite/non-PostGIS): {e}")
+    # Database schema is now managed by Alembic.
 
         
     async with AsyncSessionLocal() as db:

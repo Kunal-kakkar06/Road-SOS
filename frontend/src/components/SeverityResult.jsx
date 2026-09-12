@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_BASE = import.meta.env.VITE_API_URL || '';
 
 const SEV_BG    = { P1: '#FCEBEB', P2: '#FFF3CD', P3: '#E6F1FB', P4: '#EAF3DE' };
 const SEV_NAME  = { P1: 'Critical', P2: 'Serious', P3: 'Moderate', P4: 'Minor' };

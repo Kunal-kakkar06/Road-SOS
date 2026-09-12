@@ -38,4 +38,10 @@ frontend/dist/
 # Local databases and caches
 *.db
 backend/roadsos.db
+archive/
 .cache/
+.vercel
+.env.local
+*.local
+backend/tokens.txt
+

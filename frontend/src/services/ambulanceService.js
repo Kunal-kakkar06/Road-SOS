@@ -3,7 +3,7 @@
  * Works with the backend endpoints in backend/routers/ambulance.py.
  */
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_BASE = import.meta.env.VITE_API_URL || '';
 
 /**
  * Find nearest verified ambulances sorted by distance.
