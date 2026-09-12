@@ -5,7 +5,7 @@ services:
     dockerContext: backend
     dockerfilePath: backend/Dockerfile
     region: oregon
-    plan: starter
+    plan: free
     healthCheckPath: /health
     envVars:
       - key: PORT
@@ -28,4 +28,4 @@ databases:
     databaseName: roadsos
     user: roadsos
     region: oregon
-    plan: starter
+    plan: free
