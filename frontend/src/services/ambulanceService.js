@@ -3,7 +3,7 @@
  * Works with the backend endpoints in backend/routers/ambulance.py.
  */
 
-const API_BASE = import.meta.env.VITE_API_URL || '';
+const API_BASE = import.meta.env.VITE_API_URL || 'https://road-sos-l5ck.onrender.com';
 
 /**
  * Find nearest verified ambulances sorted by distance.

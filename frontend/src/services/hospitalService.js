@@ -3,7 +3,7 @@
  * Works online (via backend API), live via OpenStreetMap Overpass API anywhere in the world, and offline.
  */
 
-const API_BASE = import.meta.env.VITE_API_URL || '';
+const API_BASE = import.meta.env.VITE_API_URL || 'https://road-sos-l5ck.onrender.com';
 
 /**
  * Calculate distance between two GPS coordinates in kilometers.

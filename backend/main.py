@@ -180,35 +180,27 @@ app = FastAPI(
 )
 
 cors_env = os.getenv("CORS_ALLOWED_ORIGINS") or os.getenv("FRONTEND_ORIGIN")
-env_mode = os.getenv("ENVIRONMENT", "development").lower()
 
-if env_mode == "production":
-    if cors_env:
-        allow_origins = [o.strip() for o in cors_env.split(",") if o.strip()]
-    else:
-        allow_origins = [
-            "https://roadsos-app.vercel.app",
-            "https://roadsos-five.vercel.app",
-        ]
-else:
-    allow_origins = [
-        cors_env or "http://localhost:5173",
-        "https://roadsos-app.vercel.app",
-        "https://roadsos-five.vercel.app",
-        "http://localhost:5173",
-        "http://localhost:5174",
-        "http://localhost:8081",
-        "http://127.0.0.1:8081",
-        "http://localhost:8080",
-        "http://localhost:8082"
-    ]
+allow_origins = [
+    "https://road-sos-ochre.vercel.app",
+    "https://roadsos-app.vercel.app",
+    "https://roadsos-five.vercel.app",
+    "http://localhost:5173",
+    "http://localhost:5174",
+    "http://localhost:3000",
+    "http://localhost:8081",
+    "http://127.0.0.1:8081",
+]
+if cors_env:
+    allow_origins.extend([o.strip() for o in cors_env.split(",") if o.strip()])
 
-allow_origins = [o for o in allow_origins if o and o != "*" and o != "null"]
+allow_origins = list(set([o for o in allow_origins if o and o != "*" and o != "null"]))
 
-# CORS middleware allowing explicit configured origins
+# CORS middleware allowing explicit configured origins + all vercel apps
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allow_origins,
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
