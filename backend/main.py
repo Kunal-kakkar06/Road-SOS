@@ -175,12 +175,17 @@ if env_mode == "production":
     if cors_env:
         allow_origins = [o.strip() for o in cors_env.split(",") if o.strip()]
     else:
-        allow_origins = ["https://sos-nine-orcin.vercel.app"]
+        allow_origins = [
+            "https://roadsos-app.vercel.app",
+            "https://roadsos-five.vercel.app",
+        ]
 else:
     allow_origins = [
         cors_env or "http://localhost:5173",
-        "https://sos-nine-orcin.vercel.app",
+        "https://roadsos-app.vercel.app",
+        "https://roadsos-five.vercel.app",
         "http://localhost:5173",
+        "http://localhost:5174",
         "http://localhost:8081",
         "http://127.0.0.1:8081",
         "http://localhost:8080",

@@ -34,6 +34,9 @@ RUN useradd -m -u 10001 -s /bin/bash roadsos && \
 # Copy application source code
 COPY --chown=roadsos:roadsos . /app
 
+# Make startup script executable
+RUN chmod +x /app/start.sh
+
 # Security & Runtime Environment Settings
 ENV PYTHONPATH=/app
 ENV PYTHONUNBUFFERED=1
@@ -43,4 +46,4 @@ USER roadsos
 
 EXPOSE 8000
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["/app/start.sh"]
