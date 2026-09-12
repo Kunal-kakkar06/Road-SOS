@@ -3,6 +3,8 @@
   "outputDirectory": "frontend/dist",
   "framework": "vite",
   "rewrites": [
+    { "source": "/api/:path*", "destination": "https://road-sos-l5ck.onrender.com/api/:path*" },
+    { "source": "/static/:path*", "destination": "https://road-sos-l5ck.onrender.com/static/:path*" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
