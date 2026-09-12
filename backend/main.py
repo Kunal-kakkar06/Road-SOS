@@ -222,7 +222,7 @@ async def global_exception_handler(request: Request, exc: Exception):
     logging.getLogger("roadsos.system").error(f"Unhandled Server Error: {exc}\n{traceback.format_exc()}")
     return JSONResponse(
         status_code=500,
-        content={"detail": "An unexpected internal error occurred."}
+        content={"detail": f"Internal Error: {str(exc)}"}
     )
 
 # Mount static files (audio, etc.)
