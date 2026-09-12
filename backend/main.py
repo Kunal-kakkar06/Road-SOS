@@ -18,7 +18,7 @@ from fastapi.staticfiles import StaticFiles
 
 load_dotenv()
 
-APP_VERSION = os.getenv("APP_VERSION", "1.0.0")
+APP_VERSION = os.getenv("APP_VERSION", "1.0.5-live")
 
 def validate_production_configuration():
     db_url = os.getenv("DATABASE_URL", "")
