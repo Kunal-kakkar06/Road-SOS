@@ -33,48 +33,23 @@ async def get_blackspots(
     if cached:
         return json.loads(cached)
 
-    is_sqlite = "sqlite" in os.getenv("DATABASE_URL", "")
+    stmt = select(AccidentBlackspot)
+    res = await db.execute(stmt)
+    spots_raw = res.scalars().all()
     
-    if is_sqlite:
-        stmt = select(AccidentBlackspot)
-        res = await db.execute(stmt)
-        spots_raw = res.scalars().all()
-        
-        spots = []
-        radius_km = radius / 1000.0
-        for s in spots_raw:
-            dist = haversine_distance(lat, lng, s.latitude, s.longitude) if (lat and lng) else 0.0
-            if not lat or not lng or dist <= radius_km:
-                spots.append({
-                    "lat": s.latitude, "lng": s.longitude,
-                    "road": s.road_name, "area": s.area_name,
-                    "accidents": s.total_accidents, "fatal": s.fatal_accidents,
-                    "risk": s.risk_level, "intensity": s.intensity,
-                    "cause": s.primary_cause
-                })
-        spots.sort(key=lambda x: x["intensity"], reverse=True)
-    else:
-        # PostgreSQL with spatial query support
-        if lat and lng:
-            result = await db.execute(text("""
-                SELECT latitude, longitude, road_name, area_name,
-                       total_accidents, fatal_accidents, risk_level, intensity, primary_cause
-                FROM accident_blackspots
-                WHERE ST_DWithin(location::geography,
-                    ST_MakePoint(:lng,:lat)::geography,:radius)
-                ORDER BY intensity DESC
-            """), {"lat": lat, "lng": lng, "radius": radius})
-        else:
-            result = await db.execute(text("""
-                SELECT latitude, longitude, road_name, area_name,
-                       total_accidents, fatal_accidents, risk_level, intensity, primary_cause
-                FROM accident_blackspots ORDER BY intensity DESC
-            """))
-        spots = [{"lat": r["latitude"], "lng": r["longitude"], "road": r["road_name"],
-                  "area": r["area_name"], "accidents": r["total_accidents"],
-                  "fatal": r["fatal_accidents"], "risk": r["risk_level"],
-                  "intensity": r["intensity"], "cause": r["primary_cause"]}
-                 for r in result.mappings()]
+    spots = []
+    radius_km = (radius or 15000) / 1000.0
+    for s in spots_raw:
+        dist = haversine_distance(lat, lng, s.latitude, s.longitude) if (lat and lng) else 0.0
+        if not lat or not lng or dist <= radius_km:
+            spots.append({
+                "lat": s.latitude, "lng": s.longitude,
+                "road": s.road_name, "area": s.area_name,
+                "accidents": s.total_accidents, "fatal": s.fatal_accidents,
+                "risk": s.risk_level, "intensity": s.intensity,
+                "cause": s.primary_cause
+            })
+    spots.sort(key=lambda x: x["intensity"], reverse=True)
 
     # Global State Generator: If queried globally and no database blackspots exist,
     # dynamically synthesize 3 high-tech local blackspots surrounding the user's coordinates.
