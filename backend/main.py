@@ -179,14 +179,24 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# CORS middleware allowing all origins for maximum API availability
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=False,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+@app.middleware("http")
+async def custom_cors_middleware(request: Request, call_next):
+    origin = request.headers.get("origin")
+    
+    if request.method == "OPTIONS":
+        response = Response(status_code=204)
+    else:
+        response = await call_next(request)
+    
+    if origin:
+        response.headers["Access-Control-Allow-Origin"] = origin
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "*"
+    else:
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        
+    return response
 
 app.add_middleware(RequestCorrelationMiddleware)
 
