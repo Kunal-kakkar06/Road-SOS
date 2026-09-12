@@ -28,12 +28,20 @@ async def get_blackspots(
     lat: Optional[float]=None, lng: Optional[float]=None,
     radius: Optional[int]=15000, db: AsyncSession=Depends(get_db),
 ):
-    cache_key = f"bs:{round(lat or 0,2)}:{round(lng or 0,2)}"
-    cached = await get_cached(cache_key)
-    if cached:
-        return json.loads(cached)
-
     try:
+        lat_val = float(lat) if lat is not None else 0.0
+        lng_val = float(lng) if lng is not None else 0.0
+        cache_key = f"bs:{round(lat_val,2)}:{round(lng_val,2)}"
+        
+        cached = await get_cached(cache_key)
+        if cached:
+            if isinstance(cached, dict):
+                return cached
+            try:
+                return json.loads(cached)
+            except Exception:
+                pass
+
         stmt = select(AccidentBlackspot)
         res = await db.execute(stmt)
         spots_raw = res.scalars().all()
@@ -41,7 +49,7 @@ async def get_blackspots(
         spots = []
         radius_km = (radius or 15000) / 1000.0
         for s in spots_raw:
-            dist = haversine_distance(lat, lng, s.latitude, s.longitude) if (lat and lng) else 0.0
+            dist = haversine_distance(lat_val, lng_val, s.latitude, s.longitude) if (lat and lng) else 0.0
             if not lat or not lng or dist <= radius_km:
                 spots.append({
                     "lat": s.latitude, "lng": s.longitude,
@@ -61,8 +69,8 @@ async def get_blackspots(
                 offset_lat = (random.random() - 0.5) * 0.02
                 offset_lng = (random.random() - 0.5) * 0.02
                 spots.append({
-                    "lat": lat + offset_lat,
-                    "lng": lng + offset_lng,
+                    "lat": lat_val + offset_lat,
+                    "lng": lng_val + offset_lng,
                     "road": f"Hazard Zone {i+1} — {random.choice(roads)}",
                     "area": "Local Sector",
                     "accidents": random.randint(15, 50),
@@ -73,10 +81,14 @@ async def get_blackspots(
                 })
 
         resp = {"blackspots": spots, "count": len(spots)}
+        try:
+            await set_cached(cache_key, json.dumps(resp), ttl=3600)
+        except Exception:
+            pass
         return resp
     except Exception as err:
         print(f"Error in get_blackspots: {err}")
-        return {"blackspots": [], "count": 0, "error": str(err)}
+        return {"blackspots": [], "count": 0}
 
 # GET /api/prevention/blackspots/cache — all spots for offline download
 @router.get("/blackspots/cache")
