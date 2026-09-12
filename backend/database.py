@@ -9,6 +9,12 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 if not DATABASE_URL:
     raise ValueError("DATABASE_URL not found in environment")
 
+# Auto-normalize PostgreSQL scheme to postgresql+asyncpg:// for SQLAlchemy async engine
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql+asyncpg://", 1)
+elif DATABASE_URL.startswith("postgresql://") and not DATABASE_URL.startswith("postgresql+asyncpg://"):
+    DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://", 1)
+
 # Detect SQLite for testing vs PostgreSQL for production
 is_sqlite = DATABASE_URL.startswith("sqlite")
 ENVIRONMENT = os.getenv("ENVIRONMENT", "development").lower()
