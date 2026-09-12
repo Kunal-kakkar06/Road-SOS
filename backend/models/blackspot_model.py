@@ -20,10 +20,4 @@ class AccidentBlackspot(Base):
     year          = Column(Integer, nullable=True)
     created_at    = Column(DateTime, server_default=func.now())
 
-    # Include Geometry location column only if we are using PostgreSQL
-    if "sqlite" not in os.getenv("DATABASE_URL", ""):
-        try:
-            from geoalchemy2 import Geometry
-            location  = Column(Geometry('POINT', srid=4326), nullable=True)
-        except ImportError:
-            pass
+    # Latitude & Longitude standard columns used for cross-database compatibility
