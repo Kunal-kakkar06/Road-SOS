@@ -33,49 +33,50 @@ async def get_blackspots(
     if cached:
         return json.loads(cached)
 
-    stmt = select(AccidentBlackspot)
-    res = await db.execute(stmt)
-    spots_raw = res.scalars().all()
-    
-    spots = []
-    radius_km = (radius or 15000) / 1000.0
-    for s in spots_raw:
-        dist = haversine_distance(lat, lng, s.latitude, s.longitude) if (lat and lng) else 0.0
-        if not lat or not lng or dist <= radius_km:
-            spots.append({
-                "lat": s.latitude, "lng": s.longitude,
-                "road": s.road_name, "area": s.area_name,
-                "accidents": s.total_accidents, "fatal": s.fatal_accidents,
-                "risk": s.risk_level, "intensity": s.intensity,
-                "cause": s.primary_cause
-            })
-    spots.sort(key=lambda x: x.get("intensity") or 0.0, reverse=True)
+    try:
+        stmt = select(AccidentBlackspot)
+        res = await db.execute(stmt)
+        spots_raw = res.scalars().all()
+        
+        spots = []
+        radius_km = (radius or 15000) / 1000.0
+        for s in spots_raw:
+            dist = haversine_distance(lat, lng, s.latitude, s.longitude) if (lat and lng) else 0.0
+            if not lat or not lng or dist <= radius_km:
+                spots.append({
+                    "lat": s.latitude, "lng": s.longitude,
+                    "road": s.road_name, "area": s.area_name,
+                    "accidents": s.total_accidents, "fatal": s.fatal_accidents,
+                    "risk": s.risk_level, "intensity": s.intensity,
+                    "cause": s.primary_cause
+                })
+        spots.sort(key=lambda x: x.get("intensity") or 0.0, reverse=True)
 
-    # Global State Generator: If queried globally and no database blackspots exist,
-    # dynamically synthesize 3 high-tech local blackspots surrounding the user's coordinates.
-    if lat and lng and not spots:
-        import random
-        causes = ["signal_jumping", "overspeeding", "congestion", "pothole", "pedestrian"]
-        risks = ["critical", "high", "medium"]
-        roads = ["Intersection Hazard", "Major Crossing", "Blind Highway Corner", "Urban Merge Point"]
-        for i in range(3):
-            offset_lat = (random.random() - 0.5) * 0.02
-            offset_lng = (random.random() - 0.5) * 0.02
-            spots.append({
-                "lat": lat + offset_lat,
-                "lng": lng + offset_lng,
-                "road": f"Hazard Zone {i+1} — {random.choice(roads)}",
-                "area": "Local Sector",
-                "accidents": random.randint(15, 50),
-                "fatal": random.randint(1, 8),
-                "risk": random.choice(risks),
-                "intensity": round(0.4 + random.random() * 0.5, 2),
-                "cause": random.choice(causes)
-            })
+        if lat and lng and not spots:
+            import random
+            causes = ["signal_jumping", "overspeeding", "congestion", "pothole", "pedestrian"]
+            risks = ["critical", "high", "medium"]
+            roads = ["Intersection Hazard", "Major Crossing", "Blind Highway Corner", "Urban Merge Point"]
+            for i in range(3):
+                offset_lat = (random.random() - 0.5) * 0.02
+                offset_lng = (random.random() - 0.5) * 0.02
+                spots.append({
+                    "lat": lat + offset_lat,
+                    "lng": lng + offset_lng,
+                    "road": f"Hazard Zone {i+1} — {random.choice(roads)}",
+                    "area": "Local Sector",
+                    "accidents": random.randint(15, 50),
+                    "fatal": random.randint(1, 8),
+                    "risk": random.choice(risks),
+                    "intensity": round(0.4 + random.random() * 0.5, 2),
+                    "cause": random.choice(causes)
+                })
 
-    resp = {"blackspots": spots, "count": len(spots)}
-    await set_cached(cache_key, json.dumps(resp), ttl=3600)
-    return resp
+        resp = {"blackspots": spots, "count": len(spots)}
+        return resp
+    except Exception as err:
+        print(f"Error in get_blackspots: {err}")
+        return {"blackspots": [], "count": 0, "error": str(err)}
 
 # GET /api/prevention/blackspots/cache — all spots for offline download
 @router.get("/blackspots/cache")
