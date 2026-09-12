@@ -49,7 +49,7 @@ async def get_blackspots(
                 "risk": s.risk_level, "intensity": s.intensity,
                 "cause": s.primary_cause
             })
-    spots.sort(key=lambda x: x["intensity"], reverse=True)
+    spots.sort(key=lambda x: x.get("intensity") or 0.0, reverse=True)
 
     # Global State Generator: If queried globally and no database blackspots exist,
     # dynamically synthesize 3 high-tech local blackspots surrounding the user's coordinates.
