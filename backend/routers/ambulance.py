@@ -106,9 +106,19 @@ async def find_nearest(
     ))
     providers_raw = result.scalars().all()
 
+    # Fallback: If no ambulances are available (e.g. previous dispatches reserved them), reset availability for active providers
+    if not providers_raw:
+        result_all = await db.execute(select(AmbulanceProvider).filter(AmbulanceProvider.is_active == True))
+        all_active = result_all.scalars().all()
+        if all_active:
+            for p in all_active:
+                p.is_available = True
+            await db.commit()
+            providers_raw = all_active
+
     # 2. Filter by type
     if type:
-        providers_raw = [p for p in providers_raw if p.type == type]
+        providers_raw = [p for p in providers_raw if p.type == type or (type == "basic" and p.type == "bls")]
 
     # 3. Calculate Haversine distances
     providers = []
@@ -193,6 +203,14 @@ async def dispatch_ambulance(
         AmbulanceProvider.is_active == True
     ))
     providers_raw = result.scalars().all()
+
+    if not providers_raw:
+        result_all = await db.execute(select(AmbulanceProvider).filter(AmbulanceProvider.is_active == True))
+        providers_raw = result_all.scalars().all()
+        if providers_raw:
+            for p in providers_raw:
+                p.is_available = True
+            await db.commit()
 
     if not providers_raw:
         raise HTTPException(status_code=404, detail="No ambulance available")

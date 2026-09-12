@@ -71,7 +71,11 @@ export default function Ambulance() {
 
   const filtered = filter === 'all'
     ? providers
-    : providers.filter(p => p.type === filter);
+    : providers.filter(p => {
+        const t = (p.type || '').toLowerCase();
+        if (filter === 'basic') return t === 'basic' || t === 'bls';
+        return t === filter;
+      });
 
   // ══════════════ ACTIVE DISPATCH VIEW ══════════════
   if (dispatch) {

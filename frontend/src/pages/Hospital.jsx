@@ -49,7 +49,12 @@ export default function Hospital() {
 
   const filtered = filter === 'all'
     ? hospitals
-    : hospitals.filter(h => h.type === filter);
+    : hospitals.filter(h => {
+        const typeStr = (h.type || '').toLowerCase();
+        if (filter === 'govt') return typeStr.includes('govt') || typeStr.includes('government');
+        if (filter === 'private') return typeStr.includes('private') || (!typeStr.includes('govt') && !typeStr.includes('government'));
+        return typeStr.includes(filter);
+      });
 
   return (
     <div className="fade-in" style={{ paddingBottom: 32 }}>

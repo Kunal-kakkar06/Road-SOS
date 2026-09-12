@@ -140,7 +140,7 @@ export const openGoogleMapsRoute = (routeUrl) => {
 
 export const listAllHospitals = async () => {
   try {
-    const res = await fetch(`${API_BASE}/api/hospitals`);
+    const res = await fetch(`${API_BASE}/api/hospitals/`);
     if (!res.ok) throw new Error('Server error');
     return await res.json();
   } catch (e) {

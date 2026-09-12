@@ -1,5 +1,6 @@
 const TYPE_LABEL = {
   basic: 'Basic Life Support',
+  bls: 'Basic Life Support',
   als: 'Advanced Life Support',
   icu: 'Mobile ICU',
   air: 'Air Ambulance',
@@ -7,6 +8,7 @@ const TYPE_LABEL = {
 
 const TYPE_STYLE = {
   basic: { bg: 'rgba(255,255,255,0.06)', border: 'rgba(255,255,255,0.08)', text: '#cbd5e1' },
+  bls: { bg: 'rgba(255,255,255,0.06)', border: 'rgba(255,255,255,0.08)', text: '#cbd5e1' },
   als: { bg: 'rgba(0,102,135,0.15)', border: 'rgba(0,102,135,0.3)', text: '#5cc8e8' },
   icu: { bg: 'rgba(230,57,70,0.12)', border: 'rgba(230,57,70,0.25)', text: '#f87171' },
   air: { bg: 'rgba(42,157,143,0.15)', border: 'rgba(42,157,143,0.3)', text: '#2A9D8F' },
