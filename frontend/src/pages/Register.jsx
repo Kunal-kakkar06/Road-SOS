@@ -32,10 +32,13 @@ export default function Register() {
     setLoading(true);
     try {
       await register(name, email, password, confirmPassword);
+      // Initialize fresh profile shell for new user onboarding
+      const initialProfile = { full_name: name, blood_type: '', emergency_contacts: [] };
+      localStorage.setItem('medicalProfile', JSON.stringify(initialProfile));
       setSuccess('Registration successful! Redirecting to login...');
       setTimeout(() => {
         navigate('/login');
-      }, 2000);
+      }, 1500);
     } catch (err) {
       setError(err.message || 'Registration failed. Please try again.');
     } finally {

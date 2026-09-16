@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { startDigiLockerImport } from '../services/digilockerService';
 
 const BLOOD_TYPES = ['A+','A-','B+','B-','AB+','AB-','O+','O-'];
@@ -9,6 +9,7 @@ const API_BASE = import.meta.env.VITE_API_URL || '';
 
 export default function MedicalProfilePage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [profile, setProfile] = useState({
     full_name:'', date_of_birth:'', gender:'', phone:'',
     blood_type:'', allergies:[], medications:[], conditions:[],
@@ -21,6 +22,8 @@ export default function MedicalProfilePage() {
   const [newAllergy,   setNewAllergy]   = useState('');
   const [newMed,       setNewMed]       = useState('');
   const [newCondition, setNewCondition] = useState('');
+
+  const isOnboarding = location.state?.isOnboarding || (!profile.blood_type && (!profile.emergency_contacts || profile.emergency_contacts.length === 0));
 
   // Load existing profile on mount
   useEffect(() => {
@@ -64,7 +67,10 @@ export default function MedicalProfilePage() {
       // Offline fallback: save locally directly
       setSaved(true);
       setSaving(false);
-      setTimeout(() => setSaved(false), 3000);
+      setTimeout(() => {
+        setSaved(false);
+        if (isOnboarding) navigate('/', { replace: true });
+      }, 1500);
       return;
     }
     
@@ -83,11 +89,14 @@ export default function MedicalProfilePage() {
         localStorage.setItem('medicalProfile', JSON.stringify(data));
         localStorage.setItem('emergencyContacts', JSON.stringify(data.emergency_contacts || []));
         window.dispatchEvent(new Event('profileUpdated'));
-        setSaved(true);
-        setTimeout(() => setSaved(false), 3000);
       }
     } catch(_) {}
+    setSaved(true);
     setSaving(false);
+    setTimeout(() => {
+      setSaved(false);
+      if (isOnboarding) navigate('/', { replace: true });
+    }, 1500);
   };
 
   const addToList = (field, value, clearFn) => {
@@ -153,6 +162,29 @@ export default function MedicalProfilePage() {
           Dashboard
         </button>
       </div>
+
+      {/* ── Onboarding Welcome Banner ── */}
+      {isOnboarding && (
+        <div style={{
+          background: 'linear-gradient(135deg, #14213D 0%, #006687 100%)',
+          color: '#fff',
+          borderRadius: 14,
+          padding: '18px 20px',
+          marginBottom: 20,
+          border: '2px solid #fca311',
+          boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+            <span className="material-symbols-outlined" style={{ color: '#fca311', fontSize: 26 }}>medical_services</span>
+            <h3 style={{ margin: 0, fontFamily: 'Space Grotesk, sans-serif', fontSize: 17, color: '#fca311', fontWeight: 800 }}>
+              Welcome to RoadSOS! Complete Your Medical ID Profile
+            </h3>
+          </div>
+          <p style={{ margin: 0, fontSize: 13, color: '#e2e8f0', lineHeight: 1.5, fontWeight: 500 }}>
+            Before accessing emergency dispatch services, please fill in your blood group, medical history, and emergency contacts below. Saving your details will automatically bring you to your emergency dashboard.
+          </p>
+        </div>
+      )}
 
       {/* ── DigiLocker import banner ── */}
       <div style={{

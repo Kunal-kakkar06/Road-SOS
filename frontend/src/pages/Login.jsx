@@ -19,9 +19,25 @@ export default function Login() {
     setLoading(true);
     try {
       await login(email, password);
-      // Success -> Redirect to home dashboard
-      navigate('/', { replace: true });
       window.dispatchEvent(new Event('profileUpdated')); // update initials
+
+      // Check if user has completed Medical ID profile
+      let isProfileComplete = false;
+      try {
+        const cached = localStorage.getItem('medicalProfile');
+        if (cached) {
+          const prof = JSON.parse(cached);
+          if (prof && (prof.blood_type || (prof.emergency_contacts && prof.emergency_contacts.length > 0))) {
+            isProfileComplete = true;
+          }
+        }
+      } catch (_) {}
+
+      if (!isProfileComplete) {
+        navigate('/medical-profile', { replace: true, state: { isOnboarding: true } });
+      } else {
+        navigate('/', { replace: true });
+      }
     } catch (err) {
       setError(err.message || 'Login failed. Please check your credentials.');
     } finally {
