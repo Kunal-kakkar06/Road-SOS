@@ -16,7 +16,7 @@ window.fetch = async function (url, options = {}) {
   // Check if target is backend and not auth endpoint
   if (isBackend && !url.includes('/api/auth/')) {
     options.headers = options.headers || {};
-    const token = localStorage.getItem('accessToken');
+    const token = localStorage.getItem('accessToken') || localStorage.getItem('authToken') || localStorage.getItem('token');
     if (token) {
       if (options.headers instanceof Headers) {
         options.headers.set('Authorization', `Bearer ${token}`);
@@ -31,10 +31,10 @@ window.fetch = async function (url, options = {}) {
 
   let response = await ORIGINAL_FETCH(url, options);
 
-  // If 401 Unauthorized, try refreshing tokens
+  // If 401 Unauthorized, try refreshing tokens if valid refresh token exists
   if (response.status === 401 && isBackend && !url.includes('/api/auth/')) {
     const refreshToken = localStorage.getItem('refreshToken');
-    if (refreshToken) {
+    if (refreshToken && !refreshToken.startsWith('mock_jwt_token')) {
       try {
         const refreshRes = await ORIGINAL_FETCH(`${API_BASE}/api/auth/refresh`, {
           method: 'POST',
@@ -45,8 +45,11 @@ window.fetch = async function (url, options = {}) {
           const data = await refreshRes.json();
           localStorage.setItem('accessToken', data.access_token);
           localStorage.setItem('refreshToken', data.refresh_token);
-          localStorage.setItem('authToken', data.access_token); // Legacy compatibility
-          localStorage.setItem('user', JSON.stringify(data.user));
+          localStorage.setItem('authToken', data.access_token);
+          localStorage.setItem('token', data.access_token);
+          if (data.user) {
+            localStorage.setItem('user', JSON.stringify(data.user));
+          }
 
           // Retry original request with new token
           options.headers = options.headers || {};
@@ -56,14 +59,6 @@ window.fetch = async function (url, options = {}) {
             options.headers['Authorization'] = `Bearer ${data.access_token}`;
           }
           return await ORIGINAL_FETCH(url, options);
-        } else {
-          // Refresh token invalid -> Logout
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('refreshToken');
-          localStorage.removeItem('user');
-          localStorage.removeItem('medicalProfile');
-          localStorage.removeItem('emergencyContacts');
-          window.location.href = '/login';
         }
       } catch (err) {
         console.error('Auto-refresh token exchange failed', err);

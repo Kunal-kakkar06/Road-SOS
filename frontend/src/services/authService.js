@@ -19,6 +19,7 @@ export async function login(email, password) {
       localStorage.setItem('accessToken', data.access_token);
       localStorage.setItem('refreshToken', data.refresh_token);
       localStorage.setItem('authToken', data.access_token); // Legacy compatibility
+      localStorage.setItem('token', data.access_token);
       localStorage.setItem('user', JSON.stringify(data.user));
 
       try {
@@ -63,6 +64,7 @@ export async function login(email, password) {
   localStorage.setItem('accessToken', mockData.access_token);
   localStorage.setItem('refreshToken', mockData.refresh_token);
   localStorage.setItem('authToken', mockData.access_token);
+  localStorage.setItem('token', mockData.access_token);
   localStorage.setItem('user', JSON.stringify(mockData.user));
 
   try {
@@ -117,6 +119,7 @@ export async function register(name, email, password, confirmPassword) {
   localStorage.setItem('accessToken', mockData.access_token);
   localStorage.setItem('refreshToken', mockData.refresh_token);
   localStorage.setItem('authToken', mockData.access_token);
+  localStorage.setItem('token', mockData.access_token);
   localStorage.setItem('user', JSON.stringify(mockData.user));
 
   // Store in registeredUsers array in localStorage
@@ -147,6 +150,7 @@ export async function logout() {
   localStorage.removeItem('accessToken');
   localStorage.removeItem('refreshToken');
   localStorage.removeItem('authToken'); // Legacy compatibility
+  localStorage.removeItem('token');
   localStorage.removeItem('user');
   localStorage.removeItem('medicalProfile');
   localStorage.removeItem('emergencyContacts');

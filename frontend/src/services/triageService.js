@@ -1,5 +1,9 @@
 const API_BASE = import.meta.env.VITE_API_URL || 'https://road-sos-l5ck.onrender.com';
 
+function getToken() {
+  return localStorage.getItem('accessToken') || localStorage.getItem('authToken') || localStorage.getItem('token');
+}
+
 async function fetchWithTimeout(url, options = {}, timeout = 12000) {
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeout);
@@ -9,12 +13,6 @@ async function fetchWithTimeout(url, options = {}, timeout = 12000) {
       signal: controller.signal
     });
     clearTimeout(id);
-    if (response.status === 401) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('userRole');
-      window.location.href = '/login';
-      throw new Error('Session expired. Please log in again.');
-    }
     return response;
   } catch (error) {
     clearTimeout(id);
@@ -26,7 +24,7 @@ async function fetchWithTimeout(url, options = {}, timeout = 12000) {
 }
 
 export async function submitTriage(data) {
-  const token = localStorage.getItem('token');
+  const token = getToken();
   const headers = { 'Content-Type': 'application/json' };
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
@@ -44,7 +42,7 @@ export async function submitTriage(data) {
 }
 
 export async function submitAsyncTriage(data) {
-  const token = localStorage.getItem('token');
+  const token = getToken();
   const headers = { 'Content-Type': 'application/json' };
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
@@ -62,7 +60,7 @@ export async function submitAsyncTriage(data) {
 }
 
 export async function getTriageJobStatus(jobId) {
-  const token = localStorage.getItem('token');
+  const token = getToken();
   const headers = {};
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
@@ -79,7 +77,7 @@ export async function getTriageJobStatus(jobId) {
 }
 
 export async function uploadTriageImage(file) {
-  const token = localStorage.getItem('token');
+  const token = getToken();
   const headers = {};
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
@@ -105,7 +103,7 @@ export async function uploadTriageVoice(file) {
     return { transcript: "I am feeling dizzy, have strong chest pain and cannot breathe properly." };
   }
   
-  const token = localStorage.getItem('token');
+  const token = getToken();
   const headers = {};
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
@@ -125,7 +123,7 @@ export async function uploadTriageVoice(file) {
 }
 
 export async function getTriageHistory() {
-  const token = localStorage.getItem('token');
+  const token = getToken();
   const headers = {};
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
