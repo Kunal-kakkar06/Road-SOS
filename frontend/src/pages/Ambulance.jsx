@@ -9,7 +9,7 @@ export default function Ambulance() {
   const { isOnline } = useOutletContext();
   const [providers, setProviders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [dispatching, setDispatching] = useState(false);
+  const [dispatchingId, setDispatchingId] = useState(null);
   const [dispatch, setDispatch] = useState(null);
   const [driverPos, setDriverPos] = useState(null);
   const { coords, gpsError } = useLocationCoords();
@@ -46,9 +46,9 @@ export default function Ambulance() {
     return stop;
   }, [dispatch?.dispatch_id]);
 
-  const handleDispatch = async () => {
+  const handleDispatch = async (providerId) => {
     if (!coords) return;
-    setDispatching(true);
+    setDispatchingId(providerId);
     setError(null);
     try {
       const profile = (() => {
@@ -60,6 +60,7 @@ export default function Ambulance() {
         patientLng: coords.lng,
         patientUserId: profile.userId || 'anonymous',
         severity: 3,
+        providerId: providerId,
       });
       setDispatch(result);
       if (result.driver_lat && result.driver_lng) {
@@ -70,7 +71,7 @@ export default function Ambulance() {
     } catch (e) {
       setError(e.message || 'Dispatch failed — call 108 directly');
     }
-    setDispatching(false);
+    setDispatchingId(null);
   };
 
   const filtered = filter === 'all'
@@ -352,8 +353,8 @@ export default function Ambulance() {
             key={p.id}
             provider={p}
             rank={i + 1}
-            onDispatch={() => handleDispatch()}
-            dispatching={dispatching}
+            onDispatch={() => handleDispatch(p.id)}
+            dispatching={dispatchingId === p.id}
           />
         ))}
       </div>
