@@ -82,7 +82,7 @@ export const findNearestAmbulances = async ({ lat, lng, type }) => {
  * Dispatch nearest ambulance — sends SMS to driver.
  */
 export const dispatchAmbulance = async ({
-  patientLat, patientLng, patientUserId, sosEventId, severity, bloodType
+  patientLat, patientLng, patientUserId, sosEventId, severity, bloodType, providerId, selectedProvider
 }) => {
   try {
     const res = await fetch(`${API_BASE}/api/ambulance/dispatch`, {
@@ -93,8 +93,9 @@ export const dispatchAmbulance = async ({
         patient_lng: patientLng,
         patient_user_id: patientUserId || 'anonymous',
         sos_event_id: sosEventId || null,
-        severity: severity || 'P2',
+        severity: typeof severity === 'string' ? severity : 'P2',
         blood_type: bloodType || null,
+        provider_id: providerId || null,
       }),
       signal: AbortSignal.timeout(20000),
     });
@@ -110,15 +111,16 @@ export const dispatchAmbulance = async ({
     return {
       dispatch_id: `disp-${Date.now()}`,
       status: 'assigned',
-      provider_name: 'Sacred Heart Critical Care',
-      driver_name: 'Anil Mehta',
-      driver_phone: '+919876543205',
-      vehicle_number: 'AMB-05-4219',
-      driver_lat: pLat + 0.015,
-      driver_lng: pLng + 0.012,
-      eta_minutes: 5,
+      provider_name: selectedProvider?.name || 'Sacred Heart Critical Care',
+      driver_name: selectedProvider?.operator_name || 'Anil Mehta',
+      driver_phone: selectedProvider?.phone || '+919876543205',
+      vehicle_number: selectedProvider?.vehicle_number || 'AMB-05-4219',
+      driver_lat: selectedProvider?.latitude || (pLat + 0.015),
+      driver_lng: selectedProvider?.longitude || (pLng + 0.012),
+      eta_minutes: selectedProvider?.eta_minutes || 5,
+      eta_text: selectedProvider?.eta_text || '~5 min',
       driver_sms_sent: true,
-      route_url: `https://www.google.com/maps/dir/${pLat},${pLng}/${pLat + 0.015},${pLng + 0.012}`
+      route_url: selectedProvider?.route_url || `https://www.google.com/maps/dir/${pLat},${pLng}/${pLat + 0.015},${pLng + 0.012}`
     };
   }
 };

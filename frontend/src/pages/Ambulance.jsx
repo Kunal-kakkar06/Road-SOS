@@ -55,16 +55,20 @@ export default function Ambulance() {
         try { return JSON.parse(localStorage.getItem('medicalProfile') || '{}'); }
         catch (_) { return {}; }
       })();
+      const selectedProvider = providers.find(p => p.id === providerId || p.vehicle_number === providerId);
       const result = await dispatchAmbulance({
         patientLat: coords.lat,
         patientLng: coords.lng,
         patientUserId: profile.userId || 'anonymous',
-        severity: 3,
+        severity: 'P2',
         providerId: providerId,
+        selectedProvider: selectedProvider
       });
       setDispatch(result);
       if (result.driver_lat && result.driver_lng) {
         setDriverPos({ lat: result.driver_lat, lng: result.driver_lng });
+      } else if (selectedProvider?.latitude && selectedProvider?.longitude) {
+        setDriverPos({ lat: selectedProvider.latitude, lng: selectedProvider.longitude });
       } else {
         setDriverPos({ lat: coords.lat + 0.015, lng: coords.lng + 0.015 });
       }

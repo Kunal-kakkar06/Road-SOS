@@ -38,6 +38,7 @@ class DispatchRequest(BaseModel):
     sos_event_id:    Optional[str]   = None
     severity:        Optional[str]   = "P2"
     blood_type:      Optional[str]   = None
+    provider_id:     Optional[str]   = None
 
 
 class LocationUpdate(BaseModel):
@@ -215,18 +216,31 @@ async def dispatch_ambulance(
     if not providers_raw:
         raise HTTPException(status_code=404, detail="No ambulance available")
 
-    # Compute distances
-    candidates = []
-    for p in providers_raw:
-        dist = haversine_distance(payload.patient_lat, payload.patient_lng, p.latitude, p.longitude)
-        if dist <= 100000.0:
-            candidates.append((dist, p))
+    # Compute distances and find specified or nearest unit
+    provider = None
+    nearest_dist = 5.0
 
-    if not candidates:
-        raise HTTPException(status_code=404, detail="No ambulance available")
+    if payload.provider_id:
+        result_spec = await db.execute(select(AmbulanceProvider).filter(
+            (AmbulanceProvider.id == payload.provider_id) | (AmbulanceProvider.vehicle_number == payload.provider_id)
+        ))
+        spec_p = result_spec.scalars().first()
+        if spec_p:
+            provider = spec_p
+            nearest_dist = haversine_distance(payload.patient_lat, payload.patient_lng, provider.latitude, provider.longitude)
 
-    candidates.sort(key=lambda x: x[0])
-    nearest_dist, provider = candidates[0]
+    if not provider:
+        candidates = []
+        for p in providers_raw:
+            dist = haversine_distance(payload.patient_lat, payload.patient_lng, p.latitude, p.longitude)
+            if dist <= 100000.0:
+                candidates.append((dist, p))
+
+        if not candidates:
+            raise HTTPException(status_code=404, detail="No ambulance available")
+
+        candidates.sort(key=lambda x: x[0])
+        nearest_dist, provider = candidates[0]
 
 
     # 2. Get ETA from Google Maps
